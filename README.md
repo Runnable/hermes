@@ -21,8 +21,6 @@ and subscribing to job queues.
 
 USAGE
 -----
-```javascript
-```
 
 TESTS
 -----
