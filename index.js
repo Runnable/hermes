@@ -7,7 +7,7 @@
 require('loadenv')();
 
 var EventEmitter = require('events').EventEmitter;
-var amqplib = require('amqplib');
+var amqplib = require('amqplib/callback_api');
 var debug = require('debug')('hermes:index');
 var hasKeypaths = require('101/has-keypaths');
 var util = require('util');
@@ -62,7 +62,8 @@ function Hermes (opts) {
   });
   this.on('ready', function () {
     debug('hermes ready');
-    this.queue.map(publish, _this);
+    this.publishQueue.map(publish, _this);
+    this.subscribeQueue.map(subscribe, _this);
   });
   this.on('publish', function (data) {
     debug('hermes publish', data);
@@ -87,6 +88,7 @@ function Hermes (opts) {
    * @return null
    */
   function publish (data) {
+    debug('channel.sendToQueue', generalQueueName, data);
     _this.channel.sendToQueue(generalQueueName, data);
   }
   /**
@@ -94,6 +96,7 @@ function Hermes (opts) {
    * @return null
    */
   function subscribe (cb) {
+    debug('channel.consume', generalQueueName);
     _this.channel.consume(generalQueueName, cb);
   }
   return this;
