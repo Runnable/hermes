@@ -107,7 +107,24 @@ function Hermes (opts) {
    */
   function subscribe (queueName, cb) {
     debug('channel.consume', queueName);
-    _this.channel.consume(queueName, cb);
+    _this.channel.consume(queueName, subscribeCallback(cb));
+  }
+  /**
+   * @param {Function} cb
+   * @return Function
+   */
+  function subscribeCallback (cb) {
+    debug('subscribeCallback');
+    return function (msg) {
+      if (!msg) {
+        debug('subscribeCallback invalid message', msg);
+        return;
+      }
+      cb(msg.content.toString(), function done () {
+        debug('subscribeCallback done');
+        _this.channel.ack(msg);
+      });
+    };
   }
   return this;
 }
