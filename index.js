@@ -13,6 +13,7 @@ var debug = require('debug')('hermes:index');
 var hasKeypaths = require('101/has-keypaths');
 var util = require('util');
 
+// Temporarily hard coded
 var queues = [
   'container-create'
 ];
