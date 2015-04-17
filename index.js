@@ -120,7 +120,7 @@ function Hermes (opts) {
         debug('subscribeCallback invalid message', msg);
         return;
       }
-      cb(msg.content.toString(), function done () {
+      cb(JSON.parse(msg.content.toString()), function done () {
         debug('subscribeCallback done');
         _this.channel.ack(msg);
       });
@@ -133,12 +133,23 @@ util.inherits(Hermes, EventEmitter);
 
 /**
  * @param {String} jobName
- * @param {Object} data
+ * @param {Object|String|Buffer} data
  * @return this
  */
 Hermes.prototype.publish = function (jobName, data) {
+  /*jshint maxcomplexity:6 */
   if (!~queues.indexOf(jobName)) {
     throw new Error('attempting to publish to invalid job type: '+jobName);
+  }
+  if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
+    try {
+      JSON.parse(data.toString());
+    } catch (err) {
+      throw new Error('data must be valid JSON');
+    }
+  }
+  else {
+    data = new Buffer(JSON.stringify(data));
   }
   this.emit('publish', jobName, data);
   return this;
