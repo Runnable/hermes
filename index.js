@@ -76,19 +76,19 @@ function Hermes (opts) {
       subscribe.apply(_this, args);
     });
   });
-  this.on('publish', function (jobName, data) {
-    debug('hermes publish', jobName, data);
+  this.on('publish', function (queueName, data) {
+    debug('hermes publish', queueName, data);
     if (_this.channel) {
-      publish(jobName, data);
+      publish(queueName, data);
     }
     else {
       _this.publishQueue.push(Array.prototype.slice.call(arguments));
     }
   });
-  this.on('subscribe', function (jobName, cb) {
-    debug('hermes subscribe', jobName);
+  this.on('subscribe', function (queueName, cb) {
+    debug('hermes subscribe', queueName);
     if (_this.channel) {
-      subscribe(jobName, cb);
+      subscribe(queueName, cb);
     }
     else {
       _this.subscribeQueue.push(Array.prototype.slice.call(arguments));
@@ -133,14 +133,14 @@ function Hermes (opts) {
 util.inherits(Hermes, EventEmitter);
 
 /**
- * @param {String} jobName
+ * @param {String} queueName
  * @param {Object|String|Buffer} data
  * @return this
  */
-Hermes.prototype.publish = function (jobName, data) {
+Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:6 */
-  if (!~queues.indexOf(jobName)) {
-    throw new Error('attempting to publish to invalid job type: '+jobName);
+  if (!~queues.indexOf(queueName)) {
+    throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
     try {
@@ -152,20 +152,20 @@ Hermes.prototype.publish = function (jobName, data) {
   else {
     data = new Buffer(JSON.stringify(data));
   }
-  this.emit('publish', jobName, data);
+  this.emit('publish', queueName, data);
   return this;
 };
 
 /**
- * @param {String} jobName
- * @param {Object} data
+ * @param {String} queueName
+ * @param {Function} cb
  * @return this
  */
-Hermes.prototype.subscribe = function (jobName, cb) {
-  if (!~queues.indexOf(jobName)) {
-    throw new Error('attempting to subscribe to invalid job type: '+jobName);
+Hermes.prototype.subscribe = function (queueName, cb) {
+  if (!~queues.indexOf(queueName)) {
+    throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
-  this.emit('subscribe', jobName, cb);
+  this.emit('subscribe', queueName, cb);
   return this;
 };
 
