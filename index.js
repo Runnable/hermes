@@ -69,12 +69,13 @@ function Hermes (opts) {
   });
   this.on('ready', function () {
     debug('hermes ready');
-    _this.publishQueue.forEach(function (args) {
+    var args;
+    while(args = _this.publishQueue.pop()) {
       publish.apply(_this, args);
-    });
-    _this.subscribeQueue.forEach(function (args) {
+    }
+    while(args = _this.subscribeQueue.pop()) {
       subscribe.apply(_this, args);
-    });
+    }
   });
   this.on('publish', function (queueName, data) {
     debug('hermes publish', queueName, data);
@@ -133,6 +134,7 @@ function Hermes (opts) {
 util.inherits(Hermes, EventEmitter);
 
 /**
+ * @throws
  * @param {String} queueName
  * @param {Object|String|Buffer} data
  * @return this
@@ -157,6 +159,7 @@ Hermes.prototype.publish = function (queueName, data) {
 };
 
 /**
+ * @throws
  * @param {String} queueName
  * @param {Function} cb
  * @return this
