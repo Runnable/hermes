@@ -1,5 +1,5 @@
 {
-  "name": "hermes",
+  "name": "runnable-hermes",
   "version": "1.0.0",
   "description": "Runnable job queuing system management. Publishing. Subscribing.",
   "main": "index.js",

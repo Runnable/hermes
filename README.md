@@ -27,7 +27,7 @@ USAGE
  * Hermes attempts to connect to RabbitMQ upon instantiation,
  * throws if connection fails.
  */
-var hermes = require('hermes').hermesSingletonFactory({
+var hermes = require('runnable-hermes').hermesSingletonFactory({
   hostname: 'localhost',
   port: '5672',
   username: 'guest',

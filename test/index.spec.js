@@ -66,6 +66,7 @@ describe('hermes', function () {
     beforeEach(function (done) {
       originalQueues = Hermes.__get__('queues')
       Hermes.__set__('queues', [TEST_QUEUE]);
+
       hermesAmqplib = Hermes.__get__('amqplib');
       // connectFinish allow testing pre-post connected states
       sinon.stub(hermesAmqplib, 'connect', function (url, cb) {
