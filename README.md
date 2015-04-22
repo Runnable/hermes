@@ -56,6 +56,7 @@ TESTS
  - Tests & coverage are run using Lab
 ```
 $ npm test
+$ npm run test-cov # will auto open Google Chrome
 ```
 
 LICENSE
