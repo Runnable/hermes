@@ -58,6 +58,7 @@ describe('hermes', function () {
 
   describe('pre-connect queue', function () {
     var TEST_QUEUE = 'test-queue';
+    var channel;
     var connectFinish;
     var hermes;
     var hermesAmqplib;
@@ -73,7 +74,8 @@ describe('hermes', function () {
         connectFinish = function () {
           cb(null, {
             createChannel: function (cb) {
-              cb(null, mockChannel());
+              channel = mockChannel();
+              cb(null, channel);
             }
           });
         };
@@ -89,7 +91,7 @@ describe('hermes', function () {
     });
 
     it('should automatically queue subscribe invokations until connected to RabbitMQ server', function (done) {
-      //expect(hermesAmqplib.connect.callCount).to.equal(1);
+      expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var subscribeCB = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, subscribeCB);
@@ -111,6 +113,33 @@ describe('hermes', function () {
       connectFinish();
       // all queued subscribe jobs are complete
       expect(hermes.publishQueue).to.have.length(0);
+      done();
+    });
+
+    it('should not queue publish invokations if already connected to RabbitMQ server', function (done) {
+      expect(hermesAmqplib.connect.callCount).to.equal(1);
+      connectFinish();
+      // connected...
+      var testData = {foo: 'bar'};
+      expect(hermes.publishQueue).to.have.length(0);
+      hermes.publish(TEST_QUEUE, testData);
+      expect(hermes.publishQueue).to.have.length(0);
+      expect(channel.sendToQueue.callCount).to.equal(1);
+      expect(channel.sendToQueue.args[0][0]).to.equal(TEST_QUEUE);
+      expect(channel.sendToQueue.args[0][1].toString())
+        .to.equal(new Buffer(JSON.stringify(testData)).toString());
+      done();
+    });
+
+    it('should not queue subscribe invokations if already connected to RabbitMQ server', function (done) {
+      expect(hermesAmqplib.connect.callCount).to.equal(1);
+      connectFinish();
+      // connected...
+      var subscribeCB = function (data, done) {};
+      hermes.subscribe(TEST_QUEUE, subscribeCB);
+      expect(hermes.subscribeQueue).to.have.length(0);
+      expect(channel.consume.callCount).to.equal(1);
+      expect(channel.consume.args[0][0]).to.equal(TEST_QUEUE);
       done();
     });
   });

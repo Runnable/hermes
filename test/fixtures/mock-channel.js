@@ -10,7 +10,7 @@ var noop = require('101/noop');
  * @param {Array} callbacks
  * @return {Object}
  */
-module.exports = function (callbacks) {
+module.exports = function () {
   var fakeChannel = {
     ack: noop,
     assertQueue: noop,
@@ -19,6 +19,10 @@ module.exports = function (callbacks) {
   };
   sinon.stub(fakeChannel, 'assertQueue', function (queueName, opts, cb) {
     cb();
+  });
+  sinon.stub(fakeChannel, 'sendToQueue', function (queueName, data) {});
+  sinon.stub(fakeChannel, 'consume', function (queueName, callback) {
+    //callback();
   });
   return fakeChannel;
 };
