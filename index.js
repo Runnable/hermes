@@ -35,7 +35,7 @@ function Hermes (opts) {
                     requiredOpts.join(', '));
   }
   var _this = this;
-  this.channel = null;
+  this._channel = null;
   this.publishQueue = [];
   this.subscribeQueue = [];
   var connectionUrl = [
@@ -62,7 +62,7 @@ function Hermes (opts) {
         ch.assertQueue(queueName, {durable: true}, cb);
       }, function done (err) {
         if (err) { throw err; }
-        _this.channel = ch;
+        _this._channel = ch;
         _this.emit('ready');
       });
     });
@@ -79,7 +79,7 @@ function Hermes (opts) {
   });
   this.on('publish', function (queueName, data) {
     debug('hermes publish', queueName, data);
-    if (_this.channel) {
+    if (_this._channel) {
       publish(queueName, data);
     }
     else {
@@ -88,7 +88,7 @@ function Hermes (opts) {
   });
   this.on('subscribe', function (queueName, cb) {
     debug('hermes subscribe', queueName);
-    if (_this.channel) {
+    if (_this._channel) {
       subscribe(queueName, cb);
     }
     else {
@@ -101,7 +101,7 @@ function Hermes (opts) {
    */
   function publish (queueName, data) {
     debug('channel.sendToQueue', queueName, data);
-    _this.channel.sendToQueue(queueName, data);
+    _this._channel.sendToQueue(queueName, data);
   }
   /**
    * @param {Object} data
@@ -109,7 +109,7 @@ function Hermes (opts) {
    */
   function subscribe (queueName, cb) {
     debug('channel.consume', queueName);
-    _this.channel.consume(queueName, subscribeCallback(cb));
+    _this._channel.consume(queueName, subscribeCallback(cb));
   }
   /**
    * @param {Function} cb
@@ -124,7 +124,7 @@ function Hermes (opts) {
       }
       cb(JSON.parse(msg.content.toString()), function done () {
         debug('subscribeCallback done');
-        _this.channel.ack(msg);
+        _this._channel.ack(msg);
       });
     };
   }
