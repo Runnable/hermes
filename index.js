@@ -140,7 +140,11 @@ util.inherits(Hermes, EventEmitter);
  * @return this
  */
 Hermes.prototype.publish = function (queueName, data) {
-  /*jshint maxcomplexity:6 */
+  /*jshint maxcomplexity:7 */
+  if (process.env.DISABLE_HERMES_PUBLISH) {
+    debug('DISABLE_HERMES_PUBLISH', queueName, data);
+    return this;
+  }
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
