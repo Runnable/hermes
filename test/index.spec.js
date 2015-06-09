@@ -163,7 +163,6 @@ describe('hermes', function () {
       var worker = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, worker);
       expect(hermes.subscribeQueue).to.have.length(1);
-
       connectFinish();
       // connected...
 

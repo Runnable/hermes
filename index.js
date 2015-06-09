@@ -165,6 +165,7 @@ function Hermes (opts) {
         cancelTags.push(consumerTag);
       }
     });
+    console.log('_this._channel', Object.keys(_this._channel));
     async.eachSeries(cancelTags, _this._channel.cancel, cb);
   }
   /**
