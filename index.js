@@ -10,7 +10,6 @@ var EventEmitter = require('events').EventEmitter;
 var amqplib = require('amqplib/callback_api');
 var async = require('async');
 var debug = require('debug')('hermes:index');
-var find = require('101/find');
 var hasKeypaths = require('101/has-keypaths');
 var util = require('util');
 var uuid = require('node-uuid');
@@ -104,10 +103,15 @@ function Hermes (opts) {
       unsubscribe(queueName, cb);
     }
     else {
-      find(this.subscribeQueue, function (args) {
+      _this.subscribeQueue.forEach(function (args) {
         /* args: [queueName, cb] */
-        if (args[0] === queueName && args[1] === cb) {
-          return this.subscribeQueue.splice(this.subscribeQueue.indexOf(args), 1);
+        if (args[0] === queueName) {
+          if (cb && args[1] === cb) {
+            this.subscribeQueue.splice(this.subscribeQueue.indexOf(args), 1);
+          }
+          else {
+            this.subscribeQueue.splice(this.subscribeQueue.indexOf(args), 1);
+          }
         }
       });
     }
@@ -134,6 +138,9 @@ function Hermes (opts) {
       cb.name
     ].join('-');
     _this.consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
+
+    console.log('_this.consumerTags', _this.consumerTags);
+
     _this._channel.consume(queueName, subscribeCallback(cb), {
       consumerTag: consumerTag
     });
