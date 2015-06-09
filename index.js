@@ -105,13 +105,13 @@ function Hermes (opts) {
     else {
       _this.subscribeQueue.forEach(function (args) {
         /* args: [queueName, cb] */
-        if (args[0] === queueName) {
-          if (cb && args[1] === cb) {
+        if (cb) {
+          if (args[0] === queueName && args[1] === cb) {
             this.subscribeQueue.splice(this.subscribeQueue.indexOf(args), 1);
           }
-          else {
-            this.subscribeQueue.splice(this.subscribeQueue.indexOf(args), 1);
-          }
+        }
+        else if (args[0] === queueName) {
+          this.subscribeQueue.splice(this.subscribeQueue.indexOf(args), 1);
         }
       });
     }
@@ -156,13 +156,13 @@ function Hermes (opts) {
     var tagVal;
     Object.keys(_this.consumerTags).forEach(function (consumerTag) {
       tagVal = _this.consumerTags[consumerTag];
-      if (tagVal[0] === queueName) {
-        if (cb && tagVal[1] === cb) {
+      if (cb) {
+        if (tagVal[0] === queueName && tagVal[1] === cb) {
           cancelTags.push(consumerTag);
         }
-        else {
-          cancelTags.push(consumerTag);
-        }
+      }
+      else if (tagVal[0] === queueName) {
+        cancelTags.push(consumerTag);
       }
     });
     async.eachSeries(cancelTags, _this._channel.cancel, cb);
