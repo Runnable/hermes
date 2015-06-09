@@ -56,7 +56,7 @@ describe('hermes', function () {
     var hermes = new HermesClass(connectionOpts.noSpecPort);
   });
 
-  describe('pre-connect queue', function () {
+  describe('pre-connect and post-connect functionality', function () {
     var TEST_QUEUE = 'test-queue';
     var channel;
     var connectFinish;
@@ -153,6 +153,24 @@ describe('hermes', function () {
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
       hermes.unsubscribe(TEST_QUEUE, worker);
       expect(hermes.subscribeQueue).to.have.length(0);
+      expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      done();
+    });
+
+    it('should unsubscribe workers from rabbitmq', function (done) {
+      expect(hermesAmqplib.connect.callCount).to.equal(1);
+      // not yet connected...
+      var worker = function (data, done) {};
+      hermes.subscribe(TEST_QUEUE, worker);
+      expect(hermes.subscribeQueue).to.have.length(1);
+
+      connectFinish();
+      // connected...
+
+      expect(hermes.subscribeQueue).to.have.length(0);
+      expect(Object.keys(hermes.consumerTags)).to.have.length(1);
+
+      hermes.unsubscribe(TEST_QUEUE, worker);
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
       done();
     });
