@@ -107,11 +107,11 @@ function Hermes (opts) {
         /* args: [queueName, cb] */
         if (cb) {
           if (args[0] === queueName && args[1] === cb) {
-            this.subscribeQueue.splice(this.subscribeQueue.indexOf(args), 1);
+            _this.subscribeQueue.splice(_this.subscribeQueue.indexOf(args), 1);
           }
         }
         else if (args[0] === queueName) {
-          this.subscribeQueue.splice(this.subscribeQueue.indexOf(args), 1);
+          _this.subscribeQueue.splice(_this.subscribeQueue.indexOf(args), 1);
         }
       });
     }
