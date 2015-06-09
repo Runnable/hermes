@@ -165,10 +165,8 @@ describe('hermes', function () {
       expect(hermes.subscribeQueue).to.have.length(1);
       connectFinish();
       // connected...
-
-      //expect(hermes.subscribeQueue).to.have.length(0);
+      expect(hermes.subscribeQueue).to.have.length(0);
       expect(Object.keys(hermes.consumerTags)).to.have.length(1);
-
       hermes.unsubscribe(TEST_QUEUE, worker);
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
       done();
