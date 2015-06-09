@@ -138,9 +138,6 @@ function Hermes (opts) {
       cb.name
     ].join('-');
     _this.consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
-
-    console.log('_this.consumerTags', _this.consumerTags);
-
     _this._channel.consume(queueName, subscribeCallback(cb), {
       consumerTag: consumerTag
     });
@@ -165,8 +162,12 @@ function Hermes (opts) {
         cancelTags.push(consumerTag);
       }
     });
-    console.log('_this._channel', Object.keys(_this._channel));
-    async.eachSeries(cancelTags, _this._channel.cancel, cb);
+    async.eachSeries(cancelTags, _this._channel.cancel, function () {
+      cancelTags.forEach(function (cancelTag) {
+        delete _this.consumerTags[cancelTag];
+      });
+      cb.apply(_this, arguments);
+    });
   }
   /**
    * @param {Function} cb
