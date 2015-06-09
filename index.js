@@ -11,6 +11,7 @@ var amqplib = require('amqplib/callback_api');
 var async = require('async');
 var debug = require('debug')('hermes:index');
 var hasKeypaths = require('101/has-keypaths');
+var isFunction = require('101/is-function');
 var util = require('util');
 var uuid = require('node-uuid');
 
@@ -166,7 +167,9 @@ function Hermes (opts) {
       cancelTags.forEach(function (cancelTag) {
         delete _this.consumerTags[cancelTag];
       });
-      cb.apply(_this, arguments);
+      if (isFunction(cb)) {
+        cb.apply(_this, arguments);
+      }
     });
   }
   /**
