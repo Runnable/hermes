@@ -167,8 +167,11 @@ describe('hermes', function () {
       // connected...
       expect(hermes.subscribeQueue).to.have.length(0);
       expect(Object.keys(hermes.consumerTags)).to.have.length(1);
+      var consumerTag = Object.keys(hermes.consumerTags)[0];
       hermes.unsubscribe(TEST_QUEUE, worker);
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      expect(channel.cancel.callCount).to.equal(1);
+      expect(channel.cancel.args[0][0]).to.equal(consumerTag);
       done();
     });
 
