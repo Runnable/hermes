@@ -142,5 +142,21 @@ describe('hermes', function () {
       expect(channel.consume.args[0][0]).to.equal(TEST_QUEUE);
       done();
     });
+
+    it('should remove workers from subscribe queue on unsubscribe if not yet connected', function (done) {
+      expect(hermesAmqplib.connect.callCount).to.equal(1);
+      // not yet connected...
+      var worker = function (data, done) {};
+      hermes.subscribe(TEST_QUEUE, worker);
+
+      expect(hermes.subscribeQueue).to.have.length(1);
+      expect(Object.keys(hermes.consumerTags)).to.have.length(1);
+      hermes.unsubscribe(TEST_QUEUE, worker);
+
+      expect(hermes.subscribeQueue).to.have.length(0);
+      expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      done();
+    });
+
   });
 });
