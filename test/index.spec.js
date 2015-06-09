@@ -148,11 +148,10 @@ describe('hermes', function () {
       // not yet connected...
       var worker = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, worker);
-
       expect(hermes.subscribeQueue).to.have.length(1);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(1);
+      // only has consumerTag if registered w/ rabbitmq
+      expect(Object.keys(hermes.consumerTags)).to.have.length(0);
       hermes.unsubscribe(TEST_QUEUE, worker);
-
       expect(hermes.subscribeQueue).to.have.length(0);
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
       done();
