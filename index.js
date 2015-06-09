@@ -244,7 +244,7 @@ Hermes.prototype.unsubscribe = function (queueName, cb) {
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
-  this.emit('subscribe', queueName, cb);
+  this.emit('unsubscribe', queueName, cb);
   return this;
 };
 
