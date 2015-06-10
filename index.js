@@ -165,7 +165,7 @@ function Hermes (opts) {
         cancelTags.push(consumerTag);
       }
     });
-    async.eachSeries(cancelTags, _this._channel.cancel, function () {
+    async.eachSeries(cancelTags, _this._channel.cancel.bind(_this._channel), function () {
       cancelTags.forEach(function (cancelTag) {
         delete _this.consumerTags[cancelTag];
       });
