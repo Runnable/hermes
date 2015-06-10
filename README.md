@@ -34,21 +34,32 @@ var hermes = require('runnable-hermes').hermesSingletonFactory({
   password: 'guest'
 });
 
+var jobCallback = function (data, done) {
+  // perform operation w/ data
+  done(); // remove job from RabbitMQ queue
+};
+
 /**
  * Hermes will auto-queue subscribe & publish calls if
  * connection to RabbitMQ has not yet been established.
  * Will throw if first argument is not a string representing
  * a valid RabbitMQ queue.
  */
-hermes.subscribe('valid-queue-name', function (data, done) {
-  // perform operation w/ data
-  done(); // remove job from RabbitMQ queue
-});
+hermes.subscribe('valid-queue-name', jobCallback);
 
 /**
  * Insert job into queue w/ associated job data.
  */
 hermes.publish('valid-queue-name', {foo: 'bar'});
+
+/**
+ * Remove bounded functions from queue events (abstracts AMQP cancel & consumerTags)
+ */
+hermes.unsubscribe('valid-queue-name', jobCallback, function (err) {
+  // invoked when worker removed from RabbitMQ
+});
+// also, you can optionally remove all workers in a queue
+hermes.unsubscribe('valid-queue-name', null, function (err) {});
 ```
 
 TESTS
