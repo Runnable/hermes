@@ -144,6 +144,7 @@ describe('hermes', function () {
     });
 
     it('should remove workers from subscribe queue on unsubscribe if not yet connected (all workers in queue)', function (done) {
+      var callback = sinon.spy();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var worker = function (data, done) {};
@@ -151,13 +152,15 @@ describe('hermes', function () {
       expect(hermes.subscribeQueue).to.have.length(1);
       // only has consumerTag if registered w/ rabbitmq
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
-      hermes.unsubscribe(TEST_QUEUE);
+      hermes.unsubscribe(TEST_QUEUE, null, callback);
       expect(hermes.subscribeQueue).to.have.length(0);
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      expect(callback.callCount).to.equal(1);
       done();
     });
 
     it('should remove workers from subscribe queue on unsubscribe if not yet connected (specific workers in queue)', function (done) {
+      var callback = sinon.spy();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var worker = function (data, done) {};
@@ -167,13 +170,15 @@ describe('hermes', function () {
       expect(hermes.subscribeQueue).to.have.length(2);
       // only has consumerTag if registered w/ rabbitmq
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
-      hermes.unsubscribe(TEST_QUEUE, worker);
+      hermes.unsubscribe(TEST_QUEUE, worker, callback);
       expect(hermes.subscribeQueue).to.have.length(1);
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      expect(callback.callCount).to.equal(1);
       done();
     });
 
     it('should unsubscribe workers from rabbitmq (all workers in queue)', function (done) {
+      var callback = sinon.spy();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var worker = function (data, done) {};
@@ -187,15 +192,17 @@ describe('hermes', function () {
       expect(Object.keys(hermes.consumerTags)).to.have.length(2);
       var consumerTag = Object.keys(hermes.consumerTags)[0];
       var consumerTag2 = Object.keys(hermes.consumerTags)[1];
-      hermes.unsubscribe(TEST_QUEUE);
+      hermes.unsubscribe(TEST_QUEUE, null, callback);
       expect(Object.keys(hermes.consumerTags)).to.have.length(0);
       expect(channel.cancel.callCount).to.equal(2);
       expect(channel.cancel.args[0][0]).to.equal(consumerTag);
       expect(channel.cancel.args[1][0]).to.equal(consumerTag2);
+      expect(callback.callCount).to.equal(1);
       done();
     });
 
     it('should unsubscribe workers from rabbitmq (specific workers in queue)', function (done) {
+      var callback = sinon.spy();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var worker = function (data, done) {};
@@ -208,10 +215,11 @@ describe('hermes', function () {
       expect(hermes.subscribeQueue).to.have.length(0);
       expect(Object.keys(hermes.consumerTags)).to.have.length(2);
       var consumerTag = Object.keys(hermes.consumerTags)[1];
-      hermes.unsubscribe(TEST_QUEUE, worker);
+      hermes.unsubscribe(TEST_QUEUE, worker, callback);
       expect(Object.keys(hermes.consumerTags)).to.have.length(1);
       expect(channel.cancel.callCount).to.equal(1);
       expect(channel.cancel.args[0][0]).to.equal(consumerTag);
+      expect(callback.callCount).to.equal(1);
       done();
     });
 

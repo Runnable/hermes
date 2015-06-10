@@ -98,16 +98,16 @@ function Hermes (opts) {
       _this.subscribeQueue.push(Array.prototype.slice.call(arguments));
     }
   });
-  this.on('unsubscribe', function (queueName, cb) {
+  this.on('unsubscribe', function (queueName, handler, cb) {
     debug('hermes unsubscribe', queueName);
     if (_this._channel) {
-      unsubscribe(queueName, cb);
+      unsubscribe(queueName, handler, cb);
     }
     else {
       _this.subscribeQueue.forEach(function (args) {
         /* args: [queueName, cb] */
-        if (cb) {
-          if (args[0] === queueName && args[1] === cb) {
+        if (handler) {
+          if (args[0] === queueName && args[1] === handler) {
             _this.subscribeQueue.splice(_this.subscribeQueue.indexOf(args), 1);
           }
         }
@@ -115,6 +115,7 @@ function Hermes (opts) {
           _this.subscribeQueue.splice(_this.subscribeQueue.indexOf(args), 1);
         }
       });
+      cb();
     }
   });
   /**
@@ -145,17 +146,18 @@ function Hermes (opts) {
   }
   /**
    * @param {String} queueName
+   * @param {Function|null} handler
    * @param {Function} cb
    * @return null
    */
-  function unsubscribe (queueName, cb) {
+  function unsubscribe (queueName, handler, cb) {
     debug('channel.cancel', queueName);
     var cancelTags = [];
     var tagVal;
     Object.keys(_this.consumerTags).forEach(function (consumerTag) {
       tagVal = _this.consumerTags[consumerTag];
-      if (cb) {
-        if (tagVal[0] === queueName && tagVal[1] === cb) {
+      if (handler) {
+        if (tagVal[0] === queueName && tagVal[1] === handler) {
           cancelTags.push(consumerTag);
         }
       }
@@ -242,14 +244,15 @@ Hermes.prototype.subscribe = function (queueName, cb) {
  * Unsubscribes all workers or individual worker from queue
  * @throws
  * @param {String} queueName
+ * @param {Function|null} handler
  * @param {Function} cb (optional)
  * @return this
  */
-Hermes.prototype.unsubscribe = function (queueName, cb) {
+Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
-  this.emit('unsubscribe', queueName, cb);
+  this.emit('unsubscribe', queueName, handler, cb);
   return this;
 };
 
