@@ -11,7 +11,9 @@ var amqplib = require('amqplib/callback_api');
 var async = require('async');
 var debug = require('debug')('hermes:index');
 var hasKeypaths = require('101/has-keypaths');
+var isFunction = require('101/is-function');
 var util = require('util');
+var uuid = require('node-uuid');
 
 // Temporarily hard coded
 var queues = [
@@ -38,6 +40,7 @@ function Hermes (opts) {
   this._channel = null;
   this.publishQueue = [];
   this.subscribeQueue = [];
+  this.consumerTags = {};
   var connectionUrl = [
     'amqp://', opts.username, ':', opts.password,
     '@', opts.hostname];
@@ -95,7 +98,27 @@ function Hermes (opts) {
       _this.subscribeQueue.push(Array.prototype.slice.call(arguments));
     }
   });
+  this.on('unsubscribe', function (queueName, cb) {
+    debug('hermes unsubscribe', queueName);
+    if (_this._channel) {
+      unsubscribe(queueName, cb);
+    }
+    else {
+      _this.subscribeQueue.forEach(function (args) {
+        /* args: [queueName, cb] */
+        if (cb) {
+          if (args[0] === queueName && args[1] === cb) {
+            _this.subscribeQueue.splice(_this.subscribeQueue.indexOf(args), 1);
+          }
+        }
+        else if (args[0] === queueName) {
+          _this.subscribeQueue.splice(_this.subscribeQueue.indexOf(args), 1);
+        }
+      });
+    }
+  });
   /**
+   * @param {String} queueName
    * @param {Object} data
    * @return null
    */
@@ -104,12 +127,50 @@ function Hermes (opts) {
     _this._channel.sendToQueue(queueName, data);
   }
   /**
-   * @param {Object} data
+   * @param {String} queueName
+   * @param {Function} cb
    * @return null
    */
   function subscribe (queueName, cb) {
     debug('channel.consume', queueName);
-    _this._channel.consume(queueName, subscribeCallback(cb));
+    var consumerTag = [
+      uuid.v4(),
+      queueName,
+      cb.name
+    ].join('-');
+    _this.consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
+    _this._channel.consume(queueName, subscribeCallback(cb), {
+      consumerTag: consumerTag
+    });
+  }
+  /**
+   * @param {String} queueName
+   * @param {Function} cb
+   * @return null
+   */
+  function unsubscribe (queueName, cb) {
+    debug('channel.cancel', queueName);
+    var cancelTags = [];
+    var tagVal;
+    Object.keys(_this.consumerTags).forEach(function (consumerTag) {
+      tagVal = _this.consumerTags[consumerTag];
+      if (cb) {
+        if (tagVal[0] === queueName && tagVal[1] === cb) {
+          cancelTags.push(consumerTag);
+        }
+      }
+      else if (tagVal[0] === queueName) {
+        cancelTags.push(consumerTag);
+      }
+    });
+    async.eachSeries(cancelTags, _this._channel.cancel, function () {
+      cancelTags.forEach(function (cancelTag) {
+        delete _this.consumerTags[cancelTag];
+      });
+      if (isFunction(cb)) {
+        cb.apply(_this, arguments);
+      }
+    });
   }
   /**
    * @param {Function} cb
@@ -174,6 +235,21 @@ Hermes.prototype.subscribe = function (queueName, cb) {
                     ' and remove the job from the queue.');
   }
   this.emit('subscribe', queueName, cb);
+  return this;
+};
+
+/**
+ * Unsubscribes all workers or individual worker from queue
+ * @throws
+ * @param {String} queueName
+ * @param {Function} cb (optional)
+ * @return this
+ */
+Hermes.prototype.unsubscribe = function (queueName, cb) {
+  if (!~queues.indexOf(queueName)) {
+    throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
+  }
+  this.emit('unsubscribe', queueName, cb);
   return this;
 };
 
