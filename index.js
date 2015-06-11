@@ -12,6 +12,7 @@ var async = require('async');
 var debug = require('debug')('hermes:index');
 var hasKeypaths = require('101/has-keypaths');
 var isFunction = require('101/is-function');
+var defaults = require('101/defaults');
 var util = require('util');
 var uuid = require('node-uuid');
 
@@ -37,10 +38,10 @@ function Hermes (opts, socketOpts) {
                     '. Opts must include: '+
                     requiredOpts.join(', '));
   }
-  if (!socketOpts) {
-    socketOpts = {};
-  }
-  socketOpts.heartbeat = socketOpts.heartbeat || 10;
+  socketOpts = socketOpts || {};
+  defaults(socketOpts, {
+    heartbeat: 10
+  });
   var _this = this;
   this._channel = null;
   this.publishQueue = [];
