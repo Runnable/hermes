@@ -70,7 +70,7 @@ describe('hermes', function () {
 
       hermesAmqplib = Hermes.__get__('amqplib');
       // connectFinish allow testing pre-post connected states
-      sinon.stub(hermesAmqplib, 'connect', function (url, cb) {
+      sinon.stub(hermesAmqplib, 'connect', function (url, socketOpts, cb) {
         connectFinish = function () {
           cb(null, {
             createChannel: function (cb) {
