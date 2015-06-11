@@ -26,9 +26,10 @@ var hermes;
  * @class
  * @throws
  * @param {Object} opts
+ * @param {Object} socketOpts
  * @return this
  */
-function Hermes (opts) {
+function Hermes (opts, socketOpts) {
   var requiredOpts = ['hostname', 'port', 'username', 'password'];
   if (!hasKeypaths(opts, requiredOpts)) {
     throw new Error('Hermes missing required arguments. Supplied opts '+
@@ -36,6 +37,10 @@ function Hermes (opts) {
                     '. Opts must include: '+
                     requiredOpts.join(', '));
   }
+  if (!socketOpts) {
+    socketOpts = {};
+  }
+  socketOpts.heartbeat = socketOpts.heartbeat || 10;
   var _this = this;
   this._channel = null;
   this.publishQueue = [];
@@ -51,7 +56,7 @@ function Hermes (opts) {
   }
   connectionUrl = connectionUrl.join('');
   debug('connectionUrl', connectionUrl);
-  amqplib.connect(connectionUrl, function (err, conn) {
+  amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
     if (err) { throw err; }
     debug('rabbitmq connected');
     conn.createChannel(function (err, ch) {
