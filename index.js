@@ -56,6 +56,7 @@ function Hermes (opts, socketOpts) {
   }
   connectionUrl = connectionUrl.join('');
   debug('connectionUrl', connectionUrl);
+  debug('socketOpts', socketOpts);
   amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
     if (err) { throw err; }
     debug('rabbitmq connected');
@@ -209,6 +210,7 @@ util.inherits(Hermes, EventEmitter);
  */
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
+  debug('hermes publish', queueName, data);
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
@@ -233,6 +235,7 @@ Hermes.prototype.publish = function (queueName, data) {
  * @return this
  */
 Hermes.prototype.subscribe = function (queueName, cb) {
+  debug('hermes subscribe', queueName);
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
@@ -254,6 +257,7 @@ Hermes.prototype.subscribe = function (queueName, cb) {
  * @return this
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
+  debug('hermes unsubscribe', queueName);
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
@@ -267,7 +271,11 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
  * @return this
  */
 Hermes.prototype.close = function (cb) {
-  this._channel.close(cb);
+  debug('hermes close');
+  this._channel.close(function () {
+    debug('hermes close success', arguments);
+    cb.apply(cb, arguments);
+  });
   return this;
 };
 
@@ -275,7 +283,8 @@ Hermes.prototype.close = function (cb) {
  * Factory method takes configuration once during applicaiton lifecycle and
  * returns instance of hermes
  */
-module.exports.hermesSingletonFactory = function (opts) {
-  hermes = (hermes) ? hermes : new Hermes(opts);
+module.exports.hermesSingletonFactory = function (opts, socketOpts) {
+  debug('hermesSingletonFactory', opts, socketOpts);
+  hermes = (hermes) ? hermes : new Hermes(opts, socketOpts);
   return hermes;
 };
