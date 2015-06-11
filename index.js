@@ -262,6 +262,16 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
 };
 
 /**
+ * Disconnect
+ * @param {Function} cb
+ * @return this
+ */
+Hermes.prototype.close = function (cb) {
+  this._channel.close(cb);
+  return this;
+};
+
+/**
  * Factory method takes configuration once during applicaiton lifecycle and
  * returns instance of hermes
  */
