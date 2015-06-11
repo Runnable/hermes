@@ -38,7 +38,7 @@ describe('hermes', function () {
     var hermesAmqplib = Hermes.__get__('amqplib');
     sinon.stub(hermesAmqplib, 'connect', function (url) {
       expect(url).to.be.a.string();
-      expect(url).to.equal('amqp://tom:harry@bobsburgers.net:1111');
+      expect(url).to.equal('amqp://tom:harry@bobsburgers.net:1111?heartbeat=10');
       hermesAmqplib.connect.restore();
       done();
     });
@@ -49,7 +49,7 @@ describe('hermes', function () {
     var hermesAmqplib = Hermes.__get__('amqplib');
     sinon.stub(hermesAmqplib, 'connect', function (url) {
       expect(url).to.be.a.string();
-      expect(url).to.equal('amqp://tom:harry@bobsburgers.net');
+      expect(url).to.equal('amqp://tom:harry@bobsburgers.net?heartbeat=10');
       hermesAmqplib.connect.restore();
       done();
     });

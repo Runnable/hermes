@@ -10,9 +10,10 @@ var EventEmitter = require('events').EventEmitter;
 var amqplib = require('amqplib/callback_api');
 var async = require('async');
 var debug = require('debug')('hermes:index');
+var defaults = require('101/defaults');
 var hasKeypaths = require('101/has-keypaths');
 var isFunction = require('101/is-function');
-var defaults = require('101/defaults');
+var querystring = require('querystring');
 var util = require('util');
 var uuid = require('node-uuid');
 
@@ -55,7 +56,11 @@ function Hermes (opts, socketOpts) {
     connectionUrl.push(':');
     connectionUrl.push(opts.port);
   }
-  connectionUrl = connectionUrl.join('');
+  connectionUrl = [
+    connectionUrl.join(''),
+    '?',
+    querystring.stringify(socketOpts)
+  ].join('');
   debug('connectionUrl', connectionUrl);
   debug('socketOpts', socketOpts);
   amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
