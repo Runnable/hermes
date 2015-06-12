@@ -60,6 +60,12 @@ hermes.unsubscribe('valid-queue-name', jobCallback, function (err) {
 });
 // also, you can optionally remove all workers in a queue
 hermes.unsubscribe('valid-queue-name', null, function (err) {});
+
+/**
+ * Disconnecting & reconnecting
+ */
+hermes.close(cb);
+hermes.connect(cb);
 ```
 
 TESTS
