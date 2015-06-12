@@ -10,8 +10,10 @@ var EventEmitter = require('events').EventEmitter;
 var amqplib = require('amqplib/callback_api');
 var async = require('async');
 var debug = require('debug')('hermes:index');
+var defaults = require('101/defaults');
 var hasKeypaths = require('101/has-keypaths');
 var isFunction = require('101/is-function');
+var querystring = require('querystring');
 var util = require('util');
 var uuid = require('node-uuid');
 
@@ -26,9 +28,10 @@ var hermes;
  * @class
  * @throws
  * @param {Object} opts
+ * @param {Object} socketOpts
  * @return this
  */
-function Hermes (opts) {
+function Hermes (opts, socketOpts) {
   var requiredOpts = ['hostname', 'port', 'username', 'password'];
   if (!hasKeypaths(opts, requiredOpts)) {
     throw new Error('Hermes missing required arguments. Supplied opts '+
@@ -36,6 +39,10 @@ function Hermes (opts) {
                     '. Opts must include: '+
                     requiredOpts.join(', '));
   }
+  socketOpts = socketOpts || {};
+  defaults(socketOpts, {
+    heartbeat: 10
+  });
   var _this = this;
   this._channel = null;
   this.publishQueue = [];
@@ -49,9 +56,14 @@ function Hermes (opts) {
     connectionUrl.push(':');
     connectionUrl.push(opts.port);
   }
-  connectionUrl = connectionUrl.join('');
+  connectionUrl = [
+    connectionUrl.join(''),
+    '?',
+    querystring.stringify(socketOpts)
+  ].join('');
   debug('connectionUrl', connectionUrl);
-  amqplib.connect(connectionUrl, function (err, conn) {
+  debug('socketOpts', socketOpts);
+  amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
     if (err) { throw err; }
     debug('rabbitmq connected');
     conn.createChannel(function (err, ch) {
@@ -204,6 +216,7 @@ util.inherits(Hermes, EventEmitter);
  */
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
+  debug('hermes publish', queueName, data);
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
@@ -228,6 +241,7 @@ Hermes.prototype.publish = function (queueName, data) {
  * @return this
  */
 Hermes.prototype.subscribe = function (queueName, cb) {
+  debug('hermes subscribe', queueName);
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
@@ -249,6 +263,7 @@ Hermes.prototype.subscribe = function (queueName, cb) {
  * @return this
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
+  debug('hermes unsubscribe', queueName);
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
@@ -257,10 +272,25 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
 };
 
 /**
+ * Disconnect
+ * @param {Function} cb
+ * @return this
+ */
+Hermes.prototype.close = function (cb) {
+  debug('hermes close');
+  this._channel.close(function () {
+    debug('hermes close success', arguments);
+    cb.apply(cb, arguments);
+  });
+  return this;
+};
+
+/**
  * Factory method takes configuration once during applicaiton lifecycle and
  * returns instance of hermes
  */
-module.exports.hermesSingletonFactory = function (opts) {
-  hermes = (hermes) ? hermes : new Hermes(opts);
+module.exports.hermesSingletonFactory = function (opts, socketOpts) {
+  debug('hermesSingletonFactory', opts, socketOpts);
+  hermes = (hermes) ? hermes : new Hermes(opts, socketOpts);
   return hermes;
 };

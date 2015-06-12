@@ -38,7 +38,7 @@ describe('hermes', function () {
     var hermesAmqplib = Hermes.__get__('amqplib');
     sinon.stub(hermesAmqplib, 'connect', function (url) {
       expect(url).to.be.a.string();
-      expect(url).to.equal('amqp://tom:harry@bobsburgers.net:1111');
+      expect(url).to.equal('amqp://tom:harry@bobsburgers.net:1111?heartbeat=10');
       hermesAmqplib.connect.restore();
       done();
     });
@@ -49,7 +49,7 @@ describe('hermes', function () {
     var hermesAmqplib = Hermes.__get__('amqplib');
     sinon.stub(hermesAmqplib, 'connect', function (url) {
       expect(url).to.be.a.string();
-      expect(url).to.equal('amqp://tom:harry@bobsburgers.net');
+      expect(url).to.equal('amqp://tom:harry@bobsburgers.net?heartbeat=10');
       hermesAmqplib.connect.restore();
       done();
     });
@@ -70,7 +70,7 @@ describe('hermes', function () {
 
       hermesAmqplib = Hermes.__get__('amqplib');
       // connectFinish allow testing pre-post connected states
-      sinon.stub(hermesAmqplib, 'connect', function (url, cb) {
+      sinon.stub(hermesAmqplib, 'connect', function (url, socketOpts, cb) {
         connectFinish = function () {
           cb(null, {
             createChannel: function (cb) {
