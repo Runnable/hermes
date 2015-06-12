@@ -45,6 +45,7 @@ function Hermes (opts, socketOpts) {
   });
   var _this = this;
   this._channel = null;
+  this._connection = null;
   this.publishQueue = [];
   this.subscribeQueue = [];
   this.consumerTags = {};
@@ -66,6 +67,7 @@ function Hermes (opts, socketOpts) {
   amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
     if (err) { throw err; }
     debug('rabbitmq connected');
+    this._connection = conn;
     conn.createChannel(function (err, ch) {
       if (err) { throw err; }
       debug('rabbitmq channel created');
@@ -278,9 +280,12 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
  */
 Hermes.prototype.close = function (cb) {
   debug('hermes close');
+  var _this = this;
   this._channel.close(function () {
     debug('hermes close success', arguments);
-    cb.apply(cb, arguments);
+    _this._connection.close(function () {
+      cb.apply(cb, arguments);
+    });
   });
   return this;
 };
