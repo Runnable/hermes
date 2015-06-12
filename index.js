@@ -67,7 +67,7 @@ function Hermes (opts, socketOpts) {
   amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
     if (err) { throw err; }
     debug('rabbitmq connected');
-    this._connection = conn;
+    _this._connection = conn;
     conn.createChannel(function (err, ch) {
       if (err) { throw err; }
       debug('rabbitmq channel created');
