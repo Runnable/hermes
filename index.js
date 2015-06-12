@@ -49,41 +49,7 @@ function Hermes (opts, socketOpts) {
   this.publishQueue = [];
   this.subscribeQueue = [];
   this.consumerTags = {};
-  var connectionUrl = [
-    'amqp://', opts.username, ':', opts.password,
-    '@', opts.hostname];
-  if (opts.port) {
-    // optional port
-    connectionUrl.push(':');
-    connectionUrl.push(opts.port);
-  }
-  connectionUrl = [
-    connectionUrl.join(''),
-    '?',
-    querystring.stringify(socketOpts)
-  ].join('');
-  debug('connectionUrl', connectionUrl);
-  debug('socketOpts', socketOpts);
-  amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
-    if (err) { throw err; }
-    debug('rabbitmq connected');
-    _this._connection = conn;
-    conn.createChannel(function (err, ch) {
-      if (err) { throw err; }
-      debug('rabbitmq channel created');
-      /**
-       * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
-       * (Message Durability)
-       */
-      async.forEach(queues, function forEachQueue (queueName, cb) {
-        ch.assertQueue(queueName, {durable: true}, cb);
-      }, function done (err) {
-        if (err) { throw err; }
-        _this._channel = ch;
-        _this.emit('ready');
-      });
-    });
-  });
+  this.connect(opts, socketOpts);
   this.on('ready', function () {
     debug('hermes ready');
     var args;
@@ -271,6 +237,51 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   }
   this.emit('unsubscribe', queueName, handler, cb);
   return this;
+};
+
+/**
+ * Connect
+ * @param {Object} opts
+ * @param {Object} socketOpts
+ * @return this
+ */
+Hermes.prototype.connect = function (opts, socketOpts) {
+  var _this = this;
+  var connectionUrl = [
+    'amqp://', opts.username, ':', opts.password,
+    '@', opts.hostname];
+  if (opts.port) {
+    // optional port
+    connectionUrl.push(':');
+    connectionUrl.push(opts.port);
+  }
+  connectionUrl = [
+    connectionUrl.join(''),
+    '?',
+    querystring.stringify(socketOpts)
+  ].join('');
+  debug('connectionUrl', connectionUrl);
+  debug('socketOpts', socketOpts);
+  amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
+    if (err) { throw err; }
+    debug('rabbitmq connected');
+    _this._connection = conn;
+    conn.createChannel(function (err, ch) {
+      if (err) { throw err; }
+      debug('rabbitmq channel created');
+      /**
+       * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
+       * (Message Durability)
+       */
+      async.forEach(queues, function forEachQueue (queueName, cb) {
+        ch.assertQueue(queueName, {durable: true}, cb);
+      }, function done (err) {
+        if (err) { throw err; }
+        _this._channel = ch;
+        _this.emit('ready');
+      });
+    });
+  });
 };
 
 /**
