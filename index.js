@@ -19,7 +19,8 @@ var uuid = require('node-uuid');
 
 // Temporarily hard coded
 var queues = [
-  'container-create'
+  'container-create',
+  'container-die'
 ];
 var hermes;
 
