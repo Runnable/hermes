@@ -213,7 +213,7 @@ Hermes.prototype.subscribe = function (queueName, cb) {
   if (!~queues.indexOf(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
-  if (cb.length !== 2) {
+  if (cb.length < 2) {
     throw new Error('queue listener callback must take a "done" callback function as a second'+
                     ' argument and invoke the function to send the ACK message to RabbitMQ'+
                     ' and remove the job from the queue.');
