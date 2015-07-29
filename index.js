@@ -19,7 +19,18 @@ var uuid = require('node-uuid');
 
 // Temporarily hard coded
 var queues = [
-  'container-create'
+  'create-image-builder-container',
+  'create-instance-container',
+  'inspect-container',
+  'on-image-builder-container-create',
+  'on-image-builder-container-die',
+  'on-image-builder-container-start',
+  'on-instance-container-create',
+  'on-instance-container-die',
+  'on-instance-container-start',
+  'restart-container',
+  'start-container',
+  'stop-container'
 ];
 var hermes;
 
