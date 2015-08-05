@@ -43,6 +43,7 @@ describe('hermes', function () {
       done();
     });
     var hermes = Hermes.hermesSingletonFactory(connectionOpts.standard);
+    hermes.connect();
   });
 
   it('should correctly construct connection url string without a specified port', function (done) {
@@ -54,6 +55,7 @@ describe('hermes', function () {
       done();
     });
     var hermes = new HermesClass(connectionOpts.noSpecPort);
+    hermes.connect();
   });
 
   describe('pre-connect and post-connect functionality', function () {
@@ -81,6 +83,7 @@ describe('hermes', function () {
         };
       });
       hermes = new HermesClass(connectionOpts.standard);
+      hermes.connect();
       done();
     });
 

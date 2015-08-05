@@ -40,7 +40,7 @@ var hermes;
  * @class
  * @throws
  * @param {Object} opts
- * @param {Object} socketOpts
+ * @param {Object} socketOpts (optional)
  * @return this
  */
 function Hermes (opts, socketOpts) {
@@ -51,17 +51,20 @@ function Hermes (opts, socketOpts) {
                     '. Opts must include: '+
                     requiredOpts.join(', '));
   }
-  socketOpts = socketOpts || {};
+  if (!socketOpts) {
+    socketOpts = {};
+  }
   defaults(socketOpts, {
     heartbeat: 10
   });
   var _this = this;
   this._channel = null;
   this._connection = null;
-  this.publishQueue = [];
-  this.subscribeQueue = [];
   this.consumerTags = {};
-  this.connect(opts, socketOpts);
+  this.opts = opts;
+  this.publishQueue = [];
+  this.socketOpts = socketOpts;
+  this.subscribeQueue = [];
   this.on('ready', function () {
     debug('hermes ready');
     var args;
@@ -253,28 +256,26 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
 
 /**
  * Connect
- * @param {Object} opts
- * @param {Object} socketOpts
  * @return this
  */
-Hermes.prototype.connect = function (opts, socketOpts) {
+Hermes.prototype.connect = function () {
   var _this = this;
   var connectionUrl = [
-    'amqp://', opts.username, ':', opts.password,
-    '@', opts.hostname];
-  if (opts.port) {
+    'amqp://', this.opts.username, ':', this.opts.password,
+    '@', this.opts.hostname];
+  if (this.opts.port) {
     // optional port
     connectionUrl.push(':');
-    connectionUrl.push(opts.port);
+    connectionUrl.push(this.opts.port);
   }
   connectionUrl = [
     connectionUrl.join(''),
     '?',
-    querystring.stringify(socketOpts)
+    querystring.stringify(this.socketOpts)
   ].join('');
   debug('connectionUrl', connectionUrl);
-  debug('socketOpts', socketOpts);
-  amqplib.connect(connectionUrl, socketOpts, function (err, conn) {
+  debug('socketOpts', this.socketOpts);
+  amqplib.connect(connectionUrl, this.socketOpts, function (err, conn) {
     if (err) { throw err; }
     debug('rabbitmq connected');
     _this._connection = conn;
@@ -294,6 +295,7 @@ Hermes.prototype.connect = function (opts, socketOpts) {
       });
     });
   });
+  return this;
 };
 
 /**
