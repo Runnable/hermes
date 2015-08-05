@@ -295,6 +295,7 @@ Hermes.prototype.connect = function () {
       });
     });
   });
+  return this;
 };
 
 /**
