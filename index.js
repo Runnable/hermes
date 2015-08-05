@@ -29,8 +29,9 @@ var queues = [
   'on-instance-container-die',
   'on-instance-container-start',
   'restart-container',
-  'start-container',
-  'stop-container'
+  'start-image-builder-container',
+  'start-instance-container',
+  'stop-instance-container'
 ];
 var hermes;
 
@@ -72,7 +73,7 @@ function Hermes (opts, socketOpts) {
     }
   });
   this.on('publish', function (queueName, data) {
-    debug('hermes publish', queueName, data);
+    debug('hermes publish event', queueName, data);
     if (_this._channel) {
       publish(queueName, data);
     }
@@ -81,7 +82,7 @@ function Hermes (opts, socketOpts) {
     }
   });
   this.on('subscribe', function (queueName, cb) {
-    debug('hermes subscribe', queueName);
+    debug('hermes subscribe event', queueName);
     if (_this._channel) {
       subscribe(queueName, cb);
     }
@@ -90,7 +91,7 @@ function Hermes (opts, socketOpts) {
     }
   });
   this.on('unsubscribe', function (queueName, handler, cb) {
-    debug('hermes unsubscribe', queueName);
+    debug('hermes unsubscribe event', queueName);
     if (_this._channel) {
       unsubscribe(queueName, handler, cb);
     }
