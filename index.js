@@ -256,9 +256,10 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
 
 /**
  * Connect
+ * @param {Function} cb (optional)
  * @return this
  */
-Hermes.prototype.connect = function () {
+Hermes.prototype.connect = function (cb) {
   var _this = this;
   var connectionUrl = [
     'amqp://', this.opts.username, ':', this.opts.password,
@@ -292,6 +293,7 @@ Hermes.prototype.connect = function () {
         if (err) { throw err; }
         _this._channel = ch;
         _this.emit('ready');
+        if (cb) { cb(); }
       });
     });
   });
@@ -306,9 +308,19 @@ Hermes.prototype.connect = function () {
 Hermes.prototype.close = function (cb) {
   debug('hermes close');
   var _this = this;
+  if (!this._channel) {
+    debug('hermes close !channel');
+    return cb.apply(cb, arguments);
+  }
   this._channel.close(function () {
     debug('hermes close success', arguments);
+    delete _this._channel;
+    if (!_this._connection) {
+      debug('hermes close !connection');
+      return cb.apply(cb, arguments);
+    }
     _this._connection.close(function () {
+      delete _this._connection;
       cb.apply(cb, arguments);
     });
   });
