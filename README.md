@@ -32,7 +32,7 @@ var hermes = require('runnable-hermes').hermesSingletonFactory({
   port: '5672',
   username: 'guest',
   password: 'guest'
-});
+}).connect();
 
 var jobCallback = function (data, done) {
   // perform operation w/ data
