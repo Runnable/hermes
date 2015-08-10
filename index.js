@@ -21,6 +21,7 @@ var uuid = require('node-uuid');
 var queues = [
   'create-image-builder-container',
   'create-instance-container',
+  'delete-instance',
   'inspect-container',
   'on-image-builder-container-create',
   'on-image-builder-container-die',
