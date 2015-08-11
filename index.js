@@ -312,7 +312,7 @@ Hermes.prototype.close = function (cb) {
   var _this = this;
   async.series([
     function (cb) {
-      if (!this._channel) {
+      if (!_this._channel) {
         debug('hermes close !channel');
         return cb();
       }
@@ -322,7 +322,7 @@ Hermes.prototype.close = function (cb) {
       });
     },
     function (cb) {
-      if (!this._connection) {
+      if (!_this._connection) {
         debug('hermes connection !connection');
         return cb();
       }
