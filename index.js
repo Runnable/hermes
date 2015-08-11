@@ -16,6 +16,7 @@ var isFunction = require('101/is-function');
 var querystring = require('querystring');
 var util = require('util');
 var uuid = require('node-uuid');
+var noop = require('101/noop');
 
 // Temporarily hard coded
 var queues = [
@@ -260,6 +261,7 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
  * @return this
  */
 Hermes.prototype.connect = function (cb) {
+  cb = cb || noop;
   var _this = this;
   var connectionUrl = [
     'amqp://', this.opts.username, ':', this.opts.password,
@@ -277,11 +279,11 @@ Hermes.prototype.connect = function (cb) {
   debug('connectionUrl', connectionUrl);
   debug('socketOpts', this.socketOpts);
   amqplib.connect(connectionUrl, this.socketOpts, function (err, conn) {
-    if (err) { throw err; }
+    if (err) { return cb(err); }
     debug('rabbitmq connected');
     _this._connection = conn;
     conn.createChannel(function (err, ch) {
-      if (err) { throw err; }
+      if (err) { return cb(err); }
       debug('rabbitmq channel created');
       /**
        * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
@@ -290,10 +292,10 @@ Hermes.prototype.connect = function (cb) {
       async.forEach(queues, function forEachQueue (queueName, cb) {
         ch.assertQueue(queueName, {durable: true}, cb);
       }, function done (err) {
-        if (err) { throw err; }
+        if (err) { return cb(err); }
         _this._channel = ch;
         _this.emit('ready');
-        if (cb) { cb(); }
+        cb();
       });
     });
   });
@@ -308,22 +310,29 @@ Hermes.prototype.connect = function (cb) {
 Hermes.prototype.close = function (cb) {
   debug('hermes close');
   var _this = this;
-  if (!this._channel) {
-    debug('hermes close !channel');
-    return cb.apply(cb, arguments);
-  }
-  this._channel.close(function () {
-    debug('hermes close success', arguments);
-    delete _this._channel;
-    if (!_this._connection) {
-      debug('hermes close !connection');
-      return cb.apply(cb, arguments);
+  async.series([
+    function (cb) {
+      if (!this._channel) {
+        debug('hermes close !channel');
+        return cb();
+      }
+      _this._channel.close(function () {
+        debug('hermes channel close', arguments);
+        cb.apply(this, arguments);
+      });
+    },
+    function (cb) {
+      if (!this._connection) {
+        debug('hermes connection !connection');
+        return cb();
+      }
+      _this._connection.close(function () {
+        debug('hermes connection close', arguments);
+        cb.apply(this, arguments);
+      });
     }
-    _this._connection.close(function () {
-      delete _this._connection;
-      cb.apply(cb, arguments);
-    });
-  });
+  ], cb);
+
   return this;
 };
 
