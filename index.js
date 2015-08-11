@@ -316,8 +316,11 @@ Hermes.prototype.close = function (cb) {
         debug('hermes close !channel');
         return cb();
       }
-      _this._channel.close(function () {
+      _this._channel.close(function (err) {
         debug('hermes channel close', arguments);
+        if (!err) {
+          delete _this._channel;
+        }
         cb.apply(this, arguments);
       });
     },
@@ -326,8 +329,12 @@ Hermes.prototype.close = function (cb) {
         debug('hermes connection !connection');
         return cb();
       }
-      _this._connection.close(function () {
+      _this._connection.close(function (err) {
         debug('hermes connection close', arguments);
+        if (!err) {
+          delete _this._channel;
+          delete _this._connection;
+        }
         cb.apply(this, arguments);
       });
     }
