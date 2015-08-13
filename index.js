@@ -13,11 +13,11 @@ var debug = require('debug')('hermes:index');
 var defaults = require('101/defaults');
 var hasKeypaths = require('101/has-keypaths');
 var isFunction = require('101/is-function');
+var isString = require('101/is-string');
+var noop = require('101/noop');
 var querystring = require('querystring');
 var util = require('util');
 var uuid = require('node-uuid');
-var noop = require('101/noop');
-var isString = require('101/is-string')
 
 var hermes;
 
