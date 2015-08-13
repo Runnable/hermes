@@ -13,28 +13,12 @@ var debug = require('debug')('hermes:index');
 var defaults = require('101/defaults');
 var hasKeypaths = require('101/has-keypaths');
 var isFunction = require('101/is-function');
+var isString = require('101/is-string');
+var noop = require('101/noop');
 var querystring = require('querystring');
 var util = require('util');
 var uuid = require('node-uuid');
-var noop = require('101/noop');
 
-// Temporarily hard coded
-var queues = [
-  'create-image-builder-container',
-  'create-instance-container',
-  'delete-instance',
-  'inspect-container',
-  'on-image-builder-container-create',
-  'on-image-builder-container-die',
-  'on-image-builder-container-start',
-  'on-instance-container-create',
-  'on-instance-container-die',
-  'on-instance-container-start',
-  'restart-container',
-  'start-image-builder-container',
-  'start-instance-container',
-  'stop-instance-container'
-];
 var hermes;
 
 /**
@@ -46,13 +30,17 @@ var hermes;
  * @return this
  */
 function Hermes (opts, socketOpts) {
-  var requiredOpts = ['hostname', 'port', 'username', 'password'];
+  var requiredOpts = ['hostname', 'port', 'username', 'password', 'queues'];
   if (!hasKeypaths(opts, requiredOpts)) {
     throw new Error('Hermes missing required arguments. Supplied opts '+
-                    Object.prototype.keys(opts).join(', ')+
+                    Object.keys(opts).join(', ')+
                     '. Opts must include: '+
                     requiredOpts.join(', '));
   }
+  if (!Array.isArray(opts.queues) || !opts.queues.every(isString)) {
+    throw new Error('Hermes option `queues` must be a flat array of strings');
+  }
+  this.queues = opts.queues;
   if (!socketOpts) {
     socketOpts = {};
   }
@@ -202,7 +190,7 @@ util.inherits(Hermes, EventEmitter);
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~queues.indexOf(queueName)) {
+  if (!~this.queues.indexOf(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -227,7 +215,7 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, cb) {
   debug('hermes subscribe', queueName);
-  if (!~queues.indexOf(queueName)) {
+  if (!~this.queues.indexOf(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
   if (cb.length < 2) {
@@ -249,7 +237,7 @@ Hermes.prototype.subscribe = function (queueName, cb) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~queues.indexOf(queueName)) {
+  if (!~this.queues.indexOf(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
@@ -290,7 +278,7 @@ Hermes.prototype.connect = function (cb) {
        * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
        * (Message Durability)
        */
-      async.forEach(queues, function forEachQueue (queueName, cb) {
+      async.forEach(_this.queues, function forEachQueue (queueName, cb) {
         ch.assertQueue(queueName, {durable: true}, cb);
       }, function done (err) {
         if (err) { return cb(err); }

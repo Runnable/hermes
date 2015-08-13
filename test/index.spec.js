@@ -7,6 +7,7 @@ var Code = require('code');
 var Lab = require('lab');
 var rewire = require('rewire');
 var sinon = require('sinon');
+var defaults = require('101/defaults');
 
 var Hermes = rewire('../index');
 
@@ -31,6 +32,27 @@ describe('hermes', function () {
       return Hermes.hermesSingletonFactory({});
     };
     expect(throws).to.throw();
+    done();
+  });
+
+  it('should throw an error if the `queues` option is missing', function(done) {
+    expect(function () {
+      Hermes.hermesSingletonFactory(connectionOpts.noQueues);
+    }).to.throw();
+    done();
+  });
+
+  it('should throw an error if the `queues` option is not an array', function(done) {
+    expect(function () {
+      Hermes.hermesSingletonFactory(connectionOpts.malformedQueues);
+    }).to.throw();
+    done();
+  });
+
+  it('should throw an error if the `queues` option contains a non-string', function(done) {
+    expect(function () {
+      Hermes.hermesSingletonFactory(connectionOpts.malformedQueuesBadEntries);
+    }).to.throw();
     done();
   });
 
@@ -64,12 +86,8 @@ describe('hermes', function () {
     var connectFinish;
     var hermes;
     var hermesAmqplib;
-    var originalQueues;
 
     beforeEach(function (done) {
-      originalQueues = Hermes.__get__('queues')
-      Hermes.__set__('queues', [TEST_QUEUE]);
-
       hermesAmqplib = Hermes.__get__('amqplib');
       // connectFinish allow testing pre-post connected states
       sinon.stub(hermesAmqplib, 'connect', function (url, socketOpts, cb) {
@@ -82,14 +100,17 @@ describe('hermes', function () {
           });
         };
       });
-      hermes = new HermesClass(connectionOpts.standard);
+
+      var opts = { queues: [TEST_QUEUE] };
+      defaults(opts, connectionOpts.standard);
+      hermes = new HermesClass(opts);
       hermes.connect();
+
       done();
     });
 
     afterEach(function (done) {
       hermesAmqplib.connect.restore();
-      Hermes.__set__('queues', originalQueues);
       done();
     });
 
