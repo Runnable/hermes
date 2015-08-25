@@ -80,6 +80,35 @@ describe('hermes', function () {
     hermes.connect();
   });
 
+  it('should set the heartbeat duration based on the environment', function (done) {
+    var oldHeartbeat = process.env.RABBITMQ_HEARTBEAT;
+    process.env.RABBITMQ_HEARTBEAT = 1337;
+
+    var hermesAmqplib = Hermes.__get__('amqplib');
+    sinon.stub(hermesAmqplib, 'connect', function (url) {
+      expect(url).to.be.a.string();
+      expect(url).to.equal('amqp://tom:harry@bobsburgers.net:1111?heartbeat=1337');
+      hermesAmqplib.connect.restore();
+      process.env.RABBITMQ_HEARTBEAT = oldHeartbeat;
+      done();
+    });
+
+    var hermes = new Hermes(connectionOpts.standard);
+    hermes.connect();
+  });
+
+  it('should set the hearbeat based on passed socket options', function(done) {
+    var hermesAmqplib = Hermes.__get__('amqplib');
+    sinon.stub(hermesAmqplib, 'connect', function (url) {
+      expect(url).to.be.a.string();
+      expect(url).to.equal('amqp://tom:harry@bobsburgers.net:1111?heartbeat=5555');
+      hermesAmqplib.connect.restore();
+      done();
+    });
+    var hermes = new Hermes(connectionOpts.standard, { heartbeat: 5555 });
+    hermes.connect();
+  });
+
   describe('pre-connect and post-connect functionality', function () {
     var TEST_QUEUE = 'test-queue';
     var channel;
