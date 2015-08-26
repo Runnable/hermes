@@ -45,7 +45,7 @@ function Hermes (opts, socketOpts) {
     socketOpts = {};
   }
   defaults(socketOpts, {
-    heartbeat: 10
+    heartbeat: process.env.RABBITMQ_HEARTBEAT || 0
   });
   var _this = this;
   this._channel = null;
@@ -180,6 +180,23 @@ function Hermes (opts, socketOpts) {
 }
 
 util.inherits(Hermes, EventEmitter);
+
+/**
+ * Factory method of accessing the module level hermes singelton.
+ * @param {object} opts Options for the hermes client.
+ * @param {object} socketOpts Options for the underlying amqp socket.
+ */
+Hermes.hermesSingletonFactory = function (opts, socketOpts) {
+  debug('hermesSingletonFactory', opts, socketOpts);
+  hermes = (hermes) ? hermes : new Hermes(opts, socketOpts);
+  return hermes;
+};
+
+/**
+ * Hermes amqp interface module.
+ * @module hermes
+ */
+module.exports = Hermes;
 
 /**
  * @throws
@@ -330,14 +347,4 @@ Hermes.prototype.close = function (cb) {
   ], cb);
 
   return this;
-};
-
-/**
- * Factory method takes configuration once during applicaiton lifecycle and
- * returns instance of hermes
- */
-module.exports.hermesSingletonFactory = function (opts, socketOpts) {
-  debug('hermesSingletonFactory', opts, socketOpts);
-  hermes = (hermes) ? hermes : new Hermes(opts, socketOpts);
-  return hermes;
 };
