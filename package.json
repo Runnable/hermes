@@ -1,6 +1,6 @@
 {
   "name": "runnable-hermes",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "Runnable job queuing system management. Publishing. Subscribing.",
   "main": "index.js",
   "scripts": {
