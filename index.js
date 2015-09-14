@@ -295,8 +295,8 @@ Hermes.prototype.connect = function (cb) {
        * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
        * (Message Durability)
        */
-      async.forEach(_this.queues, function forEachQueue (queueName, cb) {
-        ch.assertQueue(queueName, {durable: true}, cb);
+      async.forEach(_this.queues, function forEachQueue (queueName, forEachCb) {
+        ch.assertQueue(queueName, {durable: true}, forEachCb);
       }, function done (err) {
         if (err) { return cb(err); }
         _this._channel = ch;
@@ -317,23 +317,23 @@ Hermes.prototype.close = function (cb) {
   debug('hermes close');
   var _this = this;
   async.series([
-    function (cb) {
+    function (stepCb) {
       if (!_this._channel) {
         debug('hermes close !channel');
-        return cb();
+        return stepCb();
       }
       _this._channel.close(function (err) {
         debug('hermes channel close', arguments);
         if (!err) {
           delete _this._channel;
         }
-        cb.apply(this, arguments);
+        stepCb.apply(this, arguments);
       });
     },
-    function (cb) {
+    function (stepCb) {
       if (!_this._connection) {
         debug('hermes connection !connection');
-        return cb();
+        return stepCb();
       }
       _this._connection.close(function (err) {
         debug('hermes connection close', arguments);
@@ -341,7 +341,7 @@ Hermes.prototype.close = function (cb) {
           delete _this._channel;
           delete _this._connection;
         }
-        cb.apply(this, arguments);
+        stepCb.apply(this, arguments);
       });
     }
   ], cb);
