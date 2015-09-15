@@ -288,6 +288,12 @@ Hermes.prototype.connect = function (cb) {
     if (err) { return cb(err); }
     debug('rabbitmq connected');
     _this._connection = conn;
+    // we need listen to the `error` otherwise it would be thrown
+    _this._connection.on('error', function (err) {
+      err = err || new Error('Connection error');
+      err.reason = 'connection error';
+      _this.emit('error', err);
+    });
     conn.createChannel(function (err, ch) {
       if (err) { return cb(err); }
       debug('rabbitmq channel created');
@@ -300,6 +306,12 @@ Hermes.prototype.connect = function (cb) {
       }, function done (err) {
         if (err) { return cb(err); }
         _this._channel = ch;
+        // we need listen to the `error` otherwise it would be thrown
+        _this._channel.on('error', function (err) {
+          err = err || new Error('Channel error');
+          err.reason = 'channel error';
+          _this.emit('error', err);
+        });
         _this.emit('ready');
         cb();
       });

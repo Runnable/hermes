@@ -13,6 +13,7 @@ var Hermes = rewire('../index');
 
 var connectionOpts = require('./fixtures/connection-opts');
 var mockChannel = require('./fixtures/mock-channel');
+var mockConnection = require('./fixtures/create-mock-connection');
 
 var lab = exports.lab = Lab.script();
 
@@ -111,6 +112,7 @@ describe('hermes', function () {
 
   describe('pre-connect and post-connect functionality', function () {
     var TEST_QUEUE = 'test-queue';
+    var connection;
     var channel;
     var connectFinish;
     var hermes;
@@ -121,12 +123,12 @@ describe('hermes', function () {
       // connectFinish allow testing pre-post connected states
       sinon.stub(hermesAmqplib, 'connect', function (url, socketOpts, cb) {
         connectFinish = function () {
-          cb(null, {
-            createChannel: function (cb) {
-              channel = mockChannel();
-              cb(null, channel);
-            }
-          });
+          connection = mockConnection();
+          connection.createChannel = function (cb) {
+            channel = mockChannel();
+            cb(null, channel);
+          };
+          cb(null, connection);
         };
       });
 
@@ -276,27 +278,34 @@ describe('hermes', function () {
       done();
     });
 
-    it('should emit channel error', function (done) {
+    it('should emit channel error to hermes', function (done) {
       var callback = sinon.spy();
+      // restub cancel
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
-      var worker = function (data, done) {};
-      var worker2 = function (data, done) {};
-      hermes.subscribe(TEST_QUEUE, worker);
-      hermes.subscribe(TEST_QUEUE, worker2);
-      expect(hermes.subscribeQueue).to.have.length(2);
       connectFinish();
       // connected...
-      expect(hermes.subscribeQueue).to.have.length(0);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(2);
-      var consumerTag = Object.keys(hermes.consumerTags)[1];
-      hermes.unsubscribe(TEST_QUEUE, worker, callback);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(1);
-      expect(channel.cancel.callCount).to.equal(1);
-      expect(channel.cancel.args[0][0]).to.equal(consumerTag);
-      expect(callback.callCount).to.equal(1);
-      done();
+      hermes.on('error', function (err) {
+        expect(err.message).to.equal('Some channel error');
+        expect(err.reason).to.equal('channel error');
+        done();
+      });
+      channel.emit('error', new Error('Some channel error'));
     });
 
+    it('should emit connection error to hermes', function (done) {
+      var callback = sinon.spy();
+      // restub cancel
+      expect(hermesAmqplib.connect.callCount).to.equal(1);
+      // not yet connected...
+      connectFinish();
+      // connected...
+      hermes.on('error', function (err) {
+        expect(err.message).to.equal('Some connection error');
+        expect(err.reason).to.equal('connection error');
+        done();
+      });
+      connection.emit('error', new Error('Some connection error'));
+    });
   });
 });

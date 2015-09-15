@@ -9,7 +9,7 @@ var sinon = require('sinon');
 var noop = require('101/noop');
 
 function FakeChannel () {
-  EventEmitter.call( this );
+  EventEmitter.call(this);
 }
 inherits(FakeChannel, EventEmitter);
 
