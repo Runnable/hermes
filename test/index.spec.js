@@ -276,5 +276,27 @@ describe('hermes', function () {
       done();
     });
 
+    it('should emit channel error', function (done) {
+      var callback = sinon.spy();
+      expect(hermesAmqplib.connect.callCount).to.equal(1);
+      // not yet connected...
+      var worker = function (data, done) {};
+      var worker2 = function (data, done) {};
+      hermes.subscribe(TEST_QUEUE, worker);
+      hermes.subscribe(TEST_QUEUE, worker2);
+      expect(hermes.subscribeQueue).to.have.length(2);
+      connectFinish();
+      // connected...
+      expect(hermes.subscribeQueue).to.have.length(0);
+      expect(Object.keys(hermes.consumerTags)).to.have.length(2);
+      var consumerTag = Object.keys(hermes.consumerTags)[1];
+      hermes.unsubscribe(TEST_QUEUE, worker, callback);
+      expect(Object.keys(hermes.consumerTags)).to.have.length(1);
+      expect(channel.cancel.callCount).to.equal(1);
+      expect(channel.cancel.args[0][0]).to.equal(consumerTag);
+      expect(callback.callCount).to.equal(1);
+      done();
+    });
+
   });
 });
