@@ -171,8 +171,13 @@ function Hermes (opts, socketOpts) {
         return;
       }
       cb(JSON.parse(msg.content.toString()), function done () {
-        debug('subscribeCallback done');
-        _this._channel.ack(msg);
+        if (_this._channel) {
+          debug('subscribeCallback done');
+          _this._channel.ack(msg);
+        }
+        else {
+          debug('subscribeCallback cannot ack. channel does not exist');
+        }
       });
     };
   }
