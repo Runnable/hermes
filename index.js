@@ -177,6 +177,7 @@ function Hermes (opts, socketOpts) {
         }
         else {
           debug('subscribeCallback cannot ack. channel does not exist');
+          _this.emit('error', new Error('Cannot ack. Channel does not exist'));
         }
       });
     };
