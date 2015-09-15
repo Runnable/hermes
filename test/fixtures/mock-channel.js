@@ -3,21 +3,28 @@
  */
 'use strict';
 
+var EventEmitter = require('events').EventEmitter;
+var inherits = require('util').inherits;
 var sinon = require('sinon');
 var noop = require('101/noop');
+
+function FakeChannel () {
+  EventEmitter.call(this);
+}
+inherits(FakeChannel, EventEmitter);
+
+FakeChannel.prototype.ack = noop;
+FakeChannel.prototype.assertQueue = noop;
+FakeChannel.prototype.consume = noop;
+FakeChannel.prototype.sendToQueue = noop;
+FakeChannel.prototype.cancel = noop;
 
 /**
  * @param {Array} callbacks
  * @return {Object}
  */
 module.exports = function () {
-  var fakeChannel = {
-    ack: noop,
-    assertQueue: noop,
-    consume: noop,
-    sendToQueue: noop,
-    cancel: noop
-  };
+  var fakeChannel = new FakeChannel();
   sinon.stub(fakeChannel, 'assertQueue', function (queueName, opts, cb) {
     cb();
   });

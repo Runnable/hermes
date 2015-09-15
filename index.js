@@ -288,6 +288,12 @@ Hermes.prototype.connect = function (cb) {
     if (err) { return cb(err); }
     debug('rabbitmq connected');
     _this._connection = conn;
+    // we need listen to the `error` otherwise it would be thrown
+    _this._connection.on('error', function (err) {
+      err = err || new Error('Connection error');
+      err.reason = 'connection error';
+      _this.emit('error', err);
+    });
     conn.createChannel(function (err, ch) {
       if (err) { return cb(err); }
       debug('rabbitmq channel created');
@@ -295,11 +301,17 @@ Hermes.prototype.connect = function (cb) {
        * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
        * (Message Durability)
        */
-      async.forEach(_this.queues, function forEachQueue (queueName, cb) {
-        ch.assertQueue(queueName, {durable: true}, cb);
+      async.forEach(_this.queues, function forEachQueue (queueName, forEachCb) {
+        ch.assertQueue(queueName, {durable: true}, forEachCb);
       }, function done (err) {
         if (err) { return cb(err); }
         _this._channel = ch;
+        // we need listen to the `error` otherwise it would be thrown
+        _this._channel.on('error', function (err) {
+          err = err || new Error('Channel error');
+          err.reason = 'channel error';
+          _this.emit('error', err);
+        });
         _this.emit('ready');
         cb();
       });
@@ -317,23 +329,23 @@ Hermes.prototype.close = function (cb) {
   debug('hermes close');
   var _this = this;
   async.series([
-    function (cb) {
+    function (stepCb) {
       if (!_this._channel) {
         debug('hermes close !channel');
-        return cb();
+        return stepCb();
       }
       _this._channel.close(function (err) {
         debug('hermes channel close', arguments);
         if (!err) {
           delete _this._channel;
         }
-        cb.apply(this, arguments);
+        stepCb.apply(this, arguments);
       });
     },
-    function (cb) {
+    function (stepCb) {
       if (!_this._connection) {
         debug('hermes connection !connection');
-        return cb();
+        return stepCb();
       }
       _this._connection.close(function (err) {
         debug('hermes connection close', arguments);
@@ -341,7 +353,7 @@ Hermes.prototype.close = function (cb) {
           delete _this._channel;
           delete _this._connection;
         }
-        cb.apply(this, arguments);
+        stepCb.apply(this, arguments);
       });
     }
   ], cb);
