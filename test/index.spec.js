@@ -307,7 +307,7 @@ describe('hermes', function () {
     });
 
     describe('#_subscribeCallback', function () {
-      it('should emit an error if channgel is null', function (done) {
+      it('should emit an error if channel is null', function (done) {
         var hermes = new Hermes(connectionOpts.standard);
         hermes.on('error', function (err) {
           expect(err).to.exist();
