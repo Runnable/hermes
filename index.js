@@ -125,7 +125,7 @@ function Hermes (opts, socketOpts) {
       cb.name
     ].join('-');
     _this.consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
-    _this._channel.consume(queueName, subscribeCallback(cb), {
+    _this._channel.consume(queueName, _this._subscribeCallback(cb), {
       consumerTag: consumerTag
     });
   }
@@ -158,23 +158,6 @@ function Hermes (opts, socketOpts) {
         cb.apply(_this, arguments);
       }
     });
-  }
-  /**
-   * @param {Function} cb
-   * @return Function
-   */
-  function subscribeCallback (cb) {
-    debug('subscribeCallback');
-    return function (msg) {
-      if (!msg) {
-        debug('subscribeCallback invalid message', msg);
-        return;
-      }
-      cb(JSON.parse(msg.content.toString()), function done () {
-        debug('subscribeCallback done');
-        _this._channel.ack(msg);
-      });
-    };
   }
   return this;
 }
@@ -360,3 +343,28 @@ Hermes.prototype.close = function (cb) {
 
   return this;
 };
+
+/**
+ * @param {Function} cb
+ * @return Function
+ */
+Hermes.prototype._subscribeCallback = function (cb) {
+  var _this = this;
+  debug('_subscribeCallback');
+  return function (msg) {
+    if (!msg) {
+      debug('_subscribeCallback invalid message', msg);
+      return;
+    }
+    cb(JSON.parse(msg.content.toString()), function done () {
+      if (_this._channel) {
+        debug('_subscribeCallback done');
+        _this._channel.ack(msg);
+      }
+      else {
+        debug('_subscribeCallback cannot ack. channel does not exist');
+        _this.emit('error', new Error('Cannot ack. Channel does not exist'));
+      }
+    });
+  };
+}
