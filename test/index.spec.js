@@ -280,7 +280,6 @@ describe('hermes', function () {
 
     it('should emit channel error to hermes', function (done) {
       var callback = sinon.spy();
-      // restub cancel
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       connectFinish();
@@ -295,7 +294,6 @@ describe('hermes', function () {
 
     it('should emit connection error to hermes', function (done) {
       var callback = sinon.spy();
-      // restub cancel
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       connectFinish();
@@ -306,6 +304,43 @@ describe('hermes', function () {
         done();
       });
       connection.emit('error', new Error('Some connection error'));
+    });
+
+    describe('#_subscribeCallback', function () {
+      it('should emit an error if channgel is null', function (done) {
+        var hermes = new Hermes(connectionOpts.standard);
+        hermes.on('error', function (err) {
+          expect(err).to.exist();
+          expect(err.message).to.equal('Cannot ack. Channel does not exist');
+          done();
+        });
+        hermes._subscribeCallback(function (message, subscribeCb) {
+          expect(message.name).to.equal('job1');
+          subscribeCb();
+        })({content: JSON.stringify({name: 'job1'})});
+      });
+      it('should call ack and callback', function (done) {
+        var msg = {
+          content: JSON.stringify({name: 'job1'})
+        };
+        sinon.spy(JSON, 'parse');
+        var hermes = new Hermes(connectionOpts.standard);
+        hermes._channel = {
+          ack: function (message) {
+            expect(message).to.equal(msg);
+            expect(JSON.parse.callCount).to.equal(1);
+            JSON.parse.restore();
+            done();
+          }
+        };
+        hermes.on('error', function (err) {
+          done(err);
+        });
+        hermes._subscribeCallback(function (message, subscribeCb) {
+          expect(message.name).to.equal('job1');
+          subscribeCb();
+        })(msg);
+      });
     });
   });
 });
