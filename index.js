@@ -11,13 +11,13 @@ var amqplib = require('amqplib/callback_api');
 var async = require('async');
 var debug = require('debug')('hermes:index');
 var defaults = require('101/defaults');
-var hasKeypaths = require('101/has-keypaths');
 var isFunction = require('101/is-function');
-var isString = require('101/is-string');
 var noop = require('101/noop');
 var querystring = require('querystring');
 var util = require('util');
 var uuid = require('node-uuid');
+
+var assertOpts = require('./lib/assert-opts');
 
 var hermes;
 
@@ -30,16 +30,8 @@ var hermes;
  * @return this
  */
 function Hermes (opts, socketOpts) {
-  var requiredOpts = ['hostname', 'port', 'username', 'password', 'queues'];
-  if (!hasKeypaths(opts, requiredOpts)) {
-    throw new Error('Hermes missing required arguments. Supplied opts '+
-                    Object.keys(opts).join(', ')+
-                    '. Opts must include: '+
-                    requiredOpts.join(', '));
-  }
-  if (!Array.isArray(opts.queues) || !opts.queues.every(isString)) {
-    throw new Error('Hermes option `queues` must be a flat array of strings');
-  }
+  // mutates opts
+  assertOpts(opts);
   this.queues = opts.queues;
   if (!socketOpts) {
     socketOpts = {};
@@ -367,4 +359,4 @@ Hermes.prototype._subscribeCallback = function (cb) {
       }
     });
   };
-}
+};
