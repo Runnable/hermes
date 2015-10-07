@@ -56,9 +56,8 @@ hermes.subscribe('valid-queue-name', jobCallback);
  *
  * @param {String} queue name
  * @param {Object|String} task data (automatically encoded as Buffer for transmisison to RabbitMQ, will be automatically decoded in subscribe)
- * @param {Object} (optional) override `persistent` global configuration specified in constructor
  */
-hermes.publish('valid-queue-name', {foo: 'bar'}, {persistent: true});
+hermes.publish('valid-queue-name', {foo: 'bar'});
 
 /**
  * Remove bounded functions from queue events (abstracts AMQP cancel & consumerTags)
