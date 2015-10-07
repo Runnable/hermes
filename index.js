@@ -34,7 +34,7 @@ function Hermes (opts, socketOpts) {
   assertOpts(opts);
   if (!socketOpts) { socketOpts = {}; }
   defaults(socketOpts, {
-    heartbeat: process.env.RABBITMQ_HEARTBEAT || 0
+    heartbeat: 0
   });
   var _this = this;
   this._channel = null;
