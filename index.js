@@ -11,13 +11,13 @@ var amqplib = require('amqplib/callback_api');
 var async = require('async');
 var debug = require('debug')('hermes:index');
 var defaults = require('101/defaults');
-var hasKeypaths = require('101/has-keypaths');
 var isFunction = require('101/is-function');
-var isString = require('101/is-string');
 var noop = require('101/noop');
 var querystring = require('querystring');
 var util = require('util');
 var uuid = require('node-uuid');
+
+var assertOpts = require('./lib/assert-opts');
 
 var hermes;
 
@@ -30,20 +30,9 @@ var hermes;
  * @return this
  */
 function Hermes (opts, socketOpts) {
-  var requiredOpts = ['hostname', 'port', 'username', 'password', 'queues'];
-  if (!hasKeypaths(opts, requiredOpts)) {
-    throw new Error('Hermes missing required arguments. Supplied opts '+
-                    Object.keys(opts).join(', ')+
-                    '. Opts must include: '+
-                    requiredOpts.join(', '));
-  }
-  if (!Array.isArray(opts.queues) || !opts.queues.every(isString)) {
-    throw new Error('Hermes option `queues` must be a flat array of strings');
-  }
-  this.queues = opts.queues;
-  if (!socketOpts) {
-    socketOpts = {};
-  }
+  // mutates opts
+  assertOpts(opts);
+  if (!socketOpts) { socketOpts = {}; }
   defaults(socketOpts, {
     heartbeat: process.env.RABBITMQ_HEARTBEAT || 0
   });
@@ -110,7 +99,8 @@ function Hermes (opts, socketOpts) {
    */
   function publish (queueName, data) {
     debug('channel.sendToQueue', queueName, data);
-    _this._channel.sendToQueue(queueName, data);
+    _this._channel.sendToQueue(
+      queueName, data, { persistent: _this.opts.persistent });
   }
   /**
    * @param {String} queueName
@@ -190,7 +180,7 @@ module.exports = Hermes;
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this.queues.indexOf(queueName)) {
+  if (!~this.opts.queues.indexOf(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -215,7 +205,7 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, cb) {
   debug('hermes subscribe', queueName);
-  if (!~this.queues.indexOf(queueName)) {
+  if (!~this.opts.queues.indexOf(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
   if (cb.length < 2) {
@@ -237,7 +227,7 @@ Hermes.prototype.subscribe = function (queueName, cb) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~this.queues.indexOf(queueName)) {
+  if (!~this.opts.queues.indexOf(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
@@ -284,7 +274,7 @@ Hermes.prototype.connect = function (cb) {
        * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
        * (Message Durability)
        */
-      async.forEach(_this.queues, function forEachQueue (queueName, forEachCb) {
+      async.forEach(_this.opts.queues, function forEachQueue (queueName, forEachCb) {
         ch.assertQueue(queueName, {durable: true}, forEachCb);
       }, function done (err) {
         if (err) { return cb(err); }
@@ -367,4 +357,4 @@ Hermes.prototype._subscribeCallback = function (cb) {
       }
     });
   };
-}
+};

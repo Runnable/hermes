@@ -1,11 +1,11 @@
 {
   "name": "runnable-hermes",
   "version": "5.3.0",
-  "description": "Runnable job queuing system management. Publishing. Subscribing.",
+  "description": "RabbitMQ AMQPLIB EventEmitter style pub/sub interface abstraction",
   "main": "index.js",
   "scripts": {
     "lint": "jshint",
-    "test": "npm run lint; DEBUG=Hermes* NODE_PATH=./ lab -c",
+    "test": "npm run lint; DEBUG=Hermes* NODE_PATH=./ lab -c -v",
     "test-cov": "rm coverage/coverage.html; NODE_PATH=./ lab -c -r html > coverage/coverage.html; open -a 'Google Chrome' coverage/coverage.html"
   },
   "author": "Casey Flynn <cflynn.us@gmail.com>",

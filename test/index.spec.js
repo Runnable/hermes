@@ -28,35 +28,6 @@ var it = lab.it;
 describe('hermes', function () {
   var HermesClass = Hermes.__get__('Hermes');
 
-  it('should throw an exception if not supplied correct opts', function (done) {
-    var throws = function () {
-      return Hermes.hermesSingletonFactory({});
-    };
-    expect(throws).to.throw();
-    done();
-  });
-
-  it('should throw an error if the `queues` option is missing', function(done) {
-    expect(function () {
-      Hermes.hermesSingletonFactory(connectionOpts.noQueues);
-    }).to.throw();
-    done();
-  });
-
-  it('should throw an error if the `queues` option is not an array', function(done) {
-    expect(function () {
-      Hermes.hermesSingletonFactory(connectionOpts.malformedQueues);
-    }).to.throw();
-    done();
-  });
-
-  it('should throw an error if the `queues` option contains a non-string', function(done) {
-    expect(function () {
-      Hermes.hermesSingletonFactory(connectionOpts.malformedQueuesBadEntries);
-    }).to.throw();
-    done();
-  });
-
   it('should initiate a connection to a rabbitmq server on instantiate', function (done) {
     var hermesAmqplib = Hermes.__get__('amqplib');
     sinon.stub(hermesAmqplib, 'connect', function (url) {
@@ -145,7 +116,7 @@ describe('hermes', function () {
       done();
     });
 
-    it('should automatically queue subscribe invokations until connected to RabbitMQ server', function (done) {
+    it('should automatically queue subscribe invocations until connected to RabbitMQ server', function (done) {
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var subscribeCB = function (data, done) {};
@@ -158,7 +129,7 @@ describe('hermes', function () {
       done();
     });
 
-    it('should automatically queue publish invokations until connected to RabbitMQ server', function (done) {
+    it('should automatically queue publish invocations until connected to RabbitMQ server', function (done) {
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var testData = {foo: 'bar'};
@@ -171,7 +142,7 @@ describe('hermes', function () {
       done();
     });
 
-    it('should not queue publish invokations if already connected to RabbitMQ server', function (done) {
+    it('should not queue publish invocations if already connected to RabbitMQ server', function (done) {
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       connectFinish();
       // connected...
@@ -186,7 +157,7 @@ describe('hermes', function () {
       done();
     });
 
-    it('should not queue subscribe invokations if already connected to RabbitMQ server', function (done) {
+    it('should not queue subscribe invocations if already connected to RabbitMQ server', function (done) {
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       connectFinish();
       // connected...
@@ -304,6 +275,20 @@ describe('hermes', function () {
         done();
       });
       connection.emit('error', new Error('Some connection error'));
+    });
+
+    describe('#persistent option', function () {
+      it('should send messages with true persistent opt', function (done) {
+        connectFinish();
+        channel.origSendToQueue = channel.sendToQueue;
+        channel.sendToQueue = sinon.spy(function (queueName, data, opts) {
+          expect(opts.persistent).to.equal(true);
+          channel.sendToQueue = channel.origSendToQueue;
+          delete channel.origSendToQueue;
+          done();
+        });
+        hermes.publish(TEST_QUEUE, {foo: 'bar'});
+      });
     });
 
     describe('#_subscribeCallback', function () {
