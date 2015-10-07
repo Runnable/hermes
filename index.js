@@ -32,9 +32,7 @@ var hermes;
 function Hermes (opts, socketOpts) {
   // mutates opts
   assertOpts(opts);
-  if (!socketOpts) {
-    socketOpts = {};
-  }
+  if (!socketOpts) { socketOpts = {}; }
   defaults(socketOpts, {
     heartbeat: process.env.RABBITMQ_HEARTBEAT || 0
   });
@@ -101,7 +99,8 @@ function Hermes (opts, socketOpts) {
    */
   function publish (queueName, data) {
     debug('channel.sendToQueue', queueName, data);
-    _this._channel.sendToQueue(queueName, data);
+    _this._channel.sendToQueue(
+      queueName, data, { persistent: _this.opts.persistent });
   }
   /**
    * @param {String} queueName
