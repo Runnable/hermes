@@ -32,7 +32,6 @@ var hermes;
 function Hermes (opts, socketOpts) {
   // mutates opts
   assertOpts(opts);
-  this.queues = opts.queues;
   if (!socketOpts) {
     socketOpts = {};
   }
@@ -182,7 +181,7 @@ module.exports = Hermes;
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this.queues.indexOf(queueName)) {
+  if (!~this.opts.queues.indexOf(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -207,7 +206,7 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, cb) {
   debug('hermes subscribe', queueName);
-  if (!~this.queues.indexOf(queueName)) {
+  if (!~this.opts.queues.indexOf(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
   if (cb.length < 2) {
@@ -229,7 +228,7 @@ Hermes.prototype.subscribe = function (queueName, cb) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~this.queues.indexOf(queueName)) {
+  if (!~this.opts.queues.indexOf(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
@@ -276,7 +275,7 @@ Hermes.prototype.connect = function (cb) {
        * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
        * (Message Durability)
        */
-      async.forEach(_this.queues, function forEachQueue (queueName, forEachCb) {
+      async.forEach(_this.opts.queues, function forEachQueue (queueName, forEachCb) {
         ch.assertQueue(queueName, {durable: true}, forEachCb);
       }, function done (err) {
         if (err) { return cb(err); }
