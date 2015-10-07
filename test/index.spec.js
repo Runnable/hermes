@@ -278,24 +278,16 @@ describe('hermes', function () {
     });
 
     describe('#persistent option', function () {
-      beforeEach(function (done) {
+      it('should send messages with true persistent opt', function (done) {
         connectFinish();
         channel.origSendToQueue = channel.sendToQueue;
         channel.sendToQueue = sinon.spy(function (queueName, data, opts) {
           expect(opts.persistent).to.equal(true);
+          channel.sendToQueue = channel.origSendToQueue;
+          delete channel.origSendToQueue;
+          done();
         });
-        done();
-      });
-
-      afterEach(function (done) {
-        channel.sendToQueue = channel.origSendToQueue;
-        delete channel.origSendToQueue;
-        done();
-      });
-
-      it('should send messages with true persistent opt', function (done) {
         hermes.publish(TEST_QUEUE, {foo: 'bar'});
-        done();
       });
     });
 
