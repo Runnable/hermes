@@ -277,7 +277,6 @@ describe('hermes', function () {
       });
 
       it('should send messages with true persistent opt', function (done) {
-        //connectFinish();
         hermes.publish(TEST_QUEUE, {foo: 'bar'});
         done();
       });
