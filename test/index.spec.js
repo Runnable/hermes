@@ -277,6 +277,29 @@ describe('hermes', function () {
       connection.emit('error', new Error('Some connection error'));
     });
 
+    describe('#persistent option', function () {
+      beforeEach(function (done) {
+        connectFinish();
+        channel.origSendToQueue = channel.sendToQueue;
+        channel.sendToQueue = sinon.spy(function (queueName, data, opts) {
+          expect(opts.persistent).to.equal(true);
+        });
+        done();
+      });
+
+      afterEach(function (done) {
+        channel.sendToQueue = channel.origSendToQueue;
+        delete channel.origSendToQueue;
+        done();
+      });
+
+      it('should send messages with true persistent opt', function (done) {
+        //connectFinish();
+        hermes.publish(TEST_QUEUE, {foo: 'bar'});
+        done();
+      });
+    });
+
     describe('#_subscribeCallback', function () {
       it('should emit an error if channel is null', function (done) {
         var hermes = new Hermes(connectionOpts.standard);
