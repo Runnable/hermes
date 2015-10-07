@@ -116,7 +116,7 @@ describe('hermes', function () {
       done();
     });
 
-    it('should automatically queue subscribe invokations until connected to RabbitMQ server', function (done) {
+    it('should automatically queue subscribe invocations until connected to RabbitMQ server', function (done) {
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var subscribeCB = function (data, done) {};
@@ -129,7 +129,7 @@ describe('hermes', function () {
       done();
     });
 
-    it('should automatically queue publish invokations until connected to RabbitMQ server', function (done) {
+    it('should automatically queue publish invocations until connected to RabbitMQ server', function (done) {
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var testData = {foo: 'bar'};
@@ -142,7 +142,7 @@ describe('hermes', function () {
       done();
     });
 
-    it('should not queue publish invokations if already connected to RabbitMQ server', function (done) {
+    it('should not queue publish invocations if already connected to RabbitMQ server', function (done) {
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       connectFinish();
       // connected...
@@ -157,7 +157,7 @@ describe('hermes', function () {
       done();
     });
 
-    it('should not queue subscribe invokations if already connected to RabbitMQ server', function (done) {
+    it('should not queue subscribe invocations if already connected to RabbitMQ server', function (done) {
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       connectFinish();
       // connected...
