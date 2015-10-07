@@ -28,35 +28,6 @@ var it = lab.it;
 describe('hermes', function () {
   var HermesClass = Hermes.__get__('Hermes');
 
-  it('should throw an exception if not supplied correct opts', function (done) {
-    var throws = function () {
-      return Hermes.hermesSingletonFactory({});
-    };
-    expect(throws).to.throw();
-    done();
-  });
-
-  it('should throw an error if the `queues` option is missing', function(done) {
-    expect(function () {
-      Hermes.hermesSingletonFactory(connectionOpts.noQueues);
-    }).to.throw();
-    done();
-  });
-
-  it('should throw an error if the `queues` option is not an array', function(done) {
-    expect(function () {
-      Hermes.hermesSingletonFactory(connectionOpts.malformedQueues);
-    }).to.throw();
-    done();
-  });
-
-  it('should throw an error if the `queues` option contains a non-string', function(done) {
-    expect(function () {
-      Hermes.hermesSingletonFactory(connectionOpts.malformedQueuesBadEntries);
-    }).to.throw();
-    done();
-  });
-
   it('should initiate a connection to a rabbitmq server on instantiate', function (done) {
     var hermesAmqplib = Hermes.__get__('amqplib');
     sinon.stub(hermesAmqplib, 'connect', function (url) {
