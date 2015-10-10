@@ -203,17 +203,17 @@ Hermes.prototype.publish = function (queueName, data) {
  * @param {Function} cb
  * @return this
  */
-Hermes.prototype.subscribe = function (queueName, cb) {
+Hermes.prototype.subscribe = function (queueName, handler) {
   debug('hermes subscribe', queueName);
   if (!~this._opts.queues.indexOf(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
-  if (cb.length < 2) {
+  if (handler.length < 2) {
     throw new Error('queue listener callback must take a "done" callback function as a second'+
                     ' argument and invoke the function to send the ACK message to RabbitMQ'+
                     ' and remove the job from the queue.');
   }
-  this.emit('subscribe', queueName, cb);
+  this.emit('subscribe', queueName, handler);
   return this;
 };
 
