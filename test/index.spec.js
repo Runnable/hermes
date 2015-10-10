@@ -104,11 +104,11 @@ describe('hermes', function () {
       // not yet connected...
       var subscribeCB = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, subscribeCB);
-      expect(hermes.subscribeQueue).to.have.length(1);
+      expect(hermes._subscribeQueue).to.have.length(1);
       // simulate connection complete
       connectFinish();
       // all queued subscribe jobs are complete
-      expect(hermes.subscribeQueue).to.have.length(0);
+      expect(hermes._subscribeQueue).to.have.length(0);
       done();
     });
 
@@ -117,11 +117,11 @@ describe('hermes', function () {
       // not yet connected...
       var testData = {foo: 'bar'};
       hermes.publish(TEST_QUEUE, testData);
-      expect(hermes.publishQueue).to.have.length(1);
+      expect(hermes._publishQueue).to.have.length(1);
       // simulate connection complete
       connectFinish();
       // all queued subscribe jobs are complete
-      expect(hermes.publishQueue).to.have.length(0);
+      expect(hermes._publishQueue).to.have.length(0);
       done();
     });
 
@@ -130,9 +130,9 @@ describe('hermes', function () {
       connectFinish();
       // connected...
       var testData = {foo: 'bar'};
-      expect(hermes.publishQueue).to.have.length(0);
+      expect(hermes._publishQueue).to.have.length(0);
       hermes.publish(TEST_QUEUE, testData);
-      expect(hermes.publishQueue).to.have.length(0);
+      expect(hermes._publishQueue).to.have.length(0);
       expect(channel.sendToQueue.callCount).to.equal(1);
       expect(channel.sendToQueue.args[0][0]).to.equal(TEST_QUEUE);
       expect(channel.sendToQueue.args[0][1].toString())
@@ -146,7 +146,7 @@ describe('hermes', function () {
       // connected...
       var subscribeCB = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, subscribeCB);
-      expect(hermes.subscribeQueue).to.have.length(0);
+      expect(hermes._subscribeQueue).to.have.length(0);
       expect(channel.consume.callCount).to.equal(1);
       expect(channel.consume.args[0][0]).to.equal(TEST_QUEUE);
       done();
@@ -158,12 +158,12 @@ describe('hermes', function () {
       // not yet connected...
       var worker = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, worker);
-      expect(hermes.subscribeQueue).to.have.length(1);
+      expect(hermes._subscribeQueue).to.have.length(1);
       // only has consumerTag if registered w/ rabbitmq
-      expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      expect(Object.keys(hermes._consumerTags)).to.have.length(0);
       hermes.unsubscribe(TEST_QUEUE, null, callback);
-      expect(hermes.subscribeQueue).to.have.length(0);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      expect(hermes._subscribeQueue).to.have.length(0);
+      expect(Object.keys(hermes._consumerTags)).to.have.length(0);
       expect(callback.callCount).to.equal(1);
       done();
     });
@@ -176,12 +176,12 @@ describe('hermes', function () {
       var worker2 = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, worker);
       hermes.subscribe(TEST_QUEUE, worker2);
-      expect(hermes.subscribeQueue).to.have.length(2);
+      expect(hermes._subscribeQueue).to.have.length(2);
       // only has consumerTag if registered w/ rabbitmq
-      expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      expect(Object.keys(hermes._consumerTags)).to.have.length(0);
       hermes.unsubscribe(TEST_QUEUE, worker, callback);
-      expect(hermes.subscribeQueue).to.have.length(1);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      expect(hermes._subscribeQueue).to.have.length(1);
+      expect(Object.keys(hermes._consumerTags)).to.have.length(0);
       expect(callback.callCount).to.equal(1);
       done();
     });
@@ -194,15 +194,15 @@ describe('hermes', function () {
       var worker2 = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, worker);
       hermes.subscribe(TEST_QUEUE, worker2);
-      expect(hermes.subscribeQueue).to.have.length(2);
+      expect(hermes._subscribeQueue).to.have.length(2);
       connectFinish();
       // connected...
-      expect(hermes.subscribeQueue).to.have.length(0);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(2);
-      var consumerTag = Object.keys(hermes.consumerTags)[0];
-      var consumerTag2 = Object.keys(hermes.consumerTags)[1];
+      expect(hermes._subscribeQueue).to.have.length(0);
+      expect(Object.keys(hermes._consumerTags)).to.have.length(2);
+      var consumerTag = Object.keys(hermes._consumerTags)[0];
+      var consumerTag2 = Object.keys(hermes._consumerTags)[1];
       hermes.unsubscribe(TEST_QUEUE, null, callback);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(0);
+      expect(Object.keys(hermes._consumerTags)).to.have.length(0);
       expect(channel.cancel.callCount).to.equal(2);
       expect(channel.cancel.args[0][0]).to.equal(consumerTag);
       expect(channel.cancel.args[1][0]).to.equal(consumerTag2);
@@ -218,14 +218,14 @@ describe('hermes', function () {
       var worker2 = function (data, done) {};
       hermes.subscribe(TEST_QUEUE, worker);
       hermes.subscribe(TEST_QUEUE, worker2);
-      expect(hermes.subscribeQueue).to.have.length(2);
+      expect(hermes._subscribeQueue).to.have.length(2);
       connectFinish();
       // connected...
-      expect(hermes.subscribeQueue).to.have.length(0);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(2);
-      var consumerTag = Object.keys(hermes.consumerTags)[1];
+      expect(hermes._subscribeQueue).to.have.length(0);
+      expect(Object.keys(hermes._consumerTags)).to.have.length(2);
+      var consumerTag = Object.keys(hermes._consumerTags)[1];
       hermes.unsubscribe(TEST_QUEUE, worker, callback);
-      expect(Object.keys(hermes.consumerTags)).to.have.length(1);
+      expect(Object.keys(hermes._consumerTags)).to.have.length(1);
       expect(channel.cancel.callCount).to.equal(1);
       expect(channel.cancel.args[0][0]).to.equal(consumerTag);
       expect(callback.callCount).to.equal(1);
