@@ -77,6 +77,39 @@ hermes.unsubscribe('valid-queue-name', null, function (err) {});
  */
 hermes.close(cb);
 hermes.connect(cb);
+
+/**
+ * Hermes class extends events.EventEmitter and emits the following events:
+ *   - 'publish'
+ *   - 'subscribe'
+ *   - 'unsubscribe'
+ *   - 'error'
+ *   - 'ready'
+ * Examples:
+ */
+hermes
+  .connect()
+  .on('ready', function () {
+  console.log('hermes connected to RabbitMQ & queues asserted');
+});
+ 
+hermes.on('publish', function (queueName, data) {
+  console.log('hermes publish action', queueName, data);
+});
+hermes.publish('valid-queue-name', {foo: 'bar'});
+
+hermes.on('subscribe', function (queueName, handlerFn) {
+  // Event listener recieves queueName and reference to assigned handler function
+  console.log('hermes subscribe action', queueName, handlerFn);
+});
+hermes.subscribe('valid-queue-name', subscribeCallback);
+
+hermes.unsubscribe('valid-queue-name', null, unsubscribeAllCallback);
+hermes.on('unsubscribe', function (queueName, handlerFn) {
+  // Invoked once per task-handler callback that is unsubscribed
+  // Event listener recieves queueName and reference to assigned handler function
+  console.log('hermes unsubscribe action', queueName, handlerFn);
+});
 ```
 
 TESTS
