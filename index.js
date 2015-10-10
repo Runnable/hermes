@@ -39,18 +39,18 @@ function Hermes (opts, socketOpts) {
   var _this = this;
   this._channel = null;
   this._connection = null;
-  this.consumerTags = {};
-  this.opts = opts;
-  this.publishQueue = [];
-  this.socketOpts = socketOpts;
-  this.subscribeQueue = [];
+  this._consumerTags = {};
+  this._opts = opts;
+  this._publishQueue = [];
+  this._socketOpts = socketOpts;
+  this._subscribeQueue = [];
   this.on('ready', function () {
     debug('hermes ready');
     var args;
-    while(args = _this.publishQueue.pop()) {
+    while(args = _this._publishQueue.pop()) {
       publish.apply(_this, args);
     }
-    while(args = _this.subscribeQueue.pop()) {
+    while(args = _this._subscribeQueue.pop()) {
       subscribe.apply(_this, args);
     }
   });
@@ -60,7 +60,7 @@ function Hermes (opts, socketOpts) {
       publish(queueName, data);
     }
     else {
-      _this.publishQueue.push(Array.prototype.slice.call(arguments));
+      _this._publishQueue.push(Array.prototype.slice.call(arguments));
     }
   });
   this.on('subscribe', function (queueName, cb) {
@@ -69,7 +69,7 @@ function Hermes (opts, socketOpts) {
       subscribe(queueName, cb);
     }
     else {
-      _this.subscribeQueue.push(Array.prototype.slice.call(arguments));
+      _this._subscribeQueue.push(Array.prototype.slice.call(arguments));
     }
   });
   this.on('unsubscribe', function (queueName, handler, cb) {
@@ -78,15 +78,15 @@ function Hermes (opts, socketOpts) {
       unsubscribe(queueName, handler, cb);
     }
     else {
-      _this.subscribeQueue.forEach(function (args) {
+      _this._subscribeQueue.forEach(function (args) {
         /* args: [queueName, cb] */
         if (handler) {
           if (args[0] === queueName && args[1] === handler) {
-            _this.subscribeQueue.splice(_this.subscribeQueue.indexOf(args), 1);
+            _this._subscribeQueue.splice(_this._subscribeQueue.indexOf(args), 1);
           }
         }
         else if (args[0] === queueName) {
-          _this.subscribeQueue.splice(_this.subscribeQueue.indexOf(args), 1);
+          _this._subscribeQueue.splice(_this._subscribeQueue.indexOf(args), 1);
         }
       });
       cb();
@@ -100,7 +100,7 @@ function Hermes (opts, socketOpts) {
   function publish (queueName, data) {
     debug('channel.sendToQueue', queueName, data);
     _this._channel.sendToQueue(
-      queueName, data, { persistent: _this.opts.persistent });
+      queueName, data, { persistent: _this._opts.persistent });
   }
   /**
    * @param {String} queueName
@@ -114,7 +114,7 @@ function Hermes (opts, socketOpts) {
       queueName,
       cb.name
     ].join('-');
-    _this.consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
+    _this._consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
     _this._channel.consume(queueName, _this._subscribeCallback(cb), {
       consumerTag: consumerTag
     });
@@ -129,8 +129,8 @@ function Hermes (opts, socketOpts) {
     debug('channel.cancel', queueName);
     var cancelTags = [];
     var tagVal;
-    Object.keys(_this.consumerTags).forEach(function (consumerTag) {
-      tagVal = _this.consumerTags[consumerTag];
+    Object.keys(_this._consumerTags).forEach(function (consumerTag) {
+      tagVal = _this._consumerTags[consumerTag];
       if (handler) {
         if (tagVal[0] === queueName && tagVal[1] === handler) {
           cancelTags.push(consumerTag);
@@ -142,7 +142,7 @@ function Hermes (opts, socketOpts) {
     });
     async.eachSeries(cancelTags, _this._channel.cancel.bind(_this._channel), function () {
       cancelTags.forEach(function (cancelTag) {
-        delete _this.consumerTags[cancelTag];
+        delete _this._consumerTags[cancelTag];
       });
       if (isFunction(cb)) {
         cb.apply(_this, arguments);
@@ -180,7 +180,7 @@ module.exports = Hermes;
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this.opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -205,7 +205,7 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, cb) {
   debug('hermes subscribe', queueName);
-  if (!~this.opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
   if (cb.length < 2) {
@@ -227,7 +227,7 @@ Hermes.prototype.subscribe = function (queueName, cb) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~this.opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
@@ -243,21 +243,21 @@ Hermes.prototype.connect = function (cb) {
   cb = cb || noop;
   var _this = this;
   var connectionUrl = [
-    'amqp://', this.opts.username, ':', this.opts.password,
-    '@', this.opts.hostname];
-  if (this.opts.port) {
+    'amqp://', this._opts.username, ':', this._opts.password,
+    '@', this._opts.hostname];
+  if (this._opts.port) {
     // optional port
     connectionUrl.push(':');
-    connectionUrl.push(this.opts.port);
+    connectionUrl.push(this._opts.port);
   }
   connectionUrl = [
     connectionUrl.join(''),
     '?',
-    querystring.stringify(this.socketOpts)
+    querystring.stringify(this._socketOpts)
   ].join('');
   debug('connectionUrl', connectionUrl);
-  debug('socketOpts', this.socketOpts);
-  amqplib.connect(connectionUrl, this.socketOpts, function (err, conn) {
+  debug('socketOpts', this._socketOpts);
+  amqplib.connect(connectionUrl, this._socketOpts, function (err, conn) {
     if (err) { return cb(err); }
     debug('rabbitmq connected');
     _this._connection = conn;
@@ -274,7 +274,7 @@ Hermes.prototype.connect = function (cb) {
        * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
        * (Message Durability)
        */
-      async.forEach(_this.opts.queues, function forEachQueue (queueName, forEachCb) {
+      async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
         ch.assertQueue(queueName, {durable: true}, forEachCb);
       }, function done (err) {
         if (err) { return cb(err); }
