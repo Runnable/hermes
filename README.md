@@ -3,6 +3,14 @@ Hermes
 
 Simplified abstraction interface to [amqp.node](https://github.com/squaremo/amqp.node)  
 
+[![Build Status](https://travis-ci.org/runnable/hermes.svg)](https://travis-ci.org/runnable/hermes)
+[![Code Climate](https://codeclimate.com/github/runnable/hermes/badges/gpa.svg)](https://codeclimate.com/github/runnable/hermes)
+[![Test Coverage](https://codeclimate.com/github/runnable/hermes/badges/coverage.svg)](https://codeclimate.com/github/runnable/hermes)
+[![Dependency Status](https://david-dm.org/runnable/hermes.svg)](https://david-dm.org/runnable/hermes)
+[![devDependency Status](https://david-dm.org/runnable/hermes/dev-status.svg)](https://david-dm.org/runnable/hermes#info=devDependencies)
+
+[![NPM](https://nodei.co/npm/runnable-hermes.png?compact=true)](https://nodei.co/npm/runnable-hermes/)  
+
 Publish & subscribe to RabbitMQ queues with simplified publish & subscribe interface
 methods.  
 
