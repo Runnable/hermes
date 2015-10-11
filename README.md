@@ -10,6 +10,7 @@ Simplified abstraction interface to [amqp.node](https://github.com/squaremo/amqp
 [![devDependency Status](https://david-dm.org/Runnable/hermes/dev-status.svg)](https://david-dm.org/runnable/hermes#info=devDependencies)
 
 [![NPM](https://nodei.co/npm/runnable-hermes.png?compact=true)](https://nodei.co/npm/runnable-hermes/)  
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Runnable/hermes?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  
 
 Publish & subscribe to RabbitMQ queues with simplified publish & subscribe interface
 methods.  
