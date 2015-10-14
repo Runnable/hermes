@@ -172,6 +172,14 @@ Hermes.hermesSingletonFactory = function (opts, socketOpts) {
 module.exports = Hermes;
 
 /**
+ * Returns all the queues with which Hermes was created.
+ * @return {Array<String>} Queue names
+ */
+Hermes.prototype.getQueues = function () {
+  return this._opts.queues.slice();
+};
+
+/**
  * @throws
  * @param {String} queueName
  * @param {Object|String|Buffer} data

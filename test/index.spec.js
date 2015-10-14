@@ -17,9 +17,7 @@ var mockConnection = require('./fixtures/create-mock-connection');
 
 var lab = exports.lab = Lab.script();
 
-var after = lab.after;
 var afterEach = lab.afterEach;
-var before = lab.before;
 var beforeEach = lab.beforeEach;
 var describe = lab.describe;
 var expect = Code.expect;
@@ -271,6 +269,18 @@ describe('hermes', function () {
           done();
         });
         hermes.publish(TEST_QUEUE, {foo: 'bar'});
+      });
+    });
+
+    describe('#getQueues', function () {
+      it('should return a copy of the queues which which hermes was created', function (done) {
+        var hermes = new Hermes(connectionOpts.standard);
+        var queues = hermes.getQueues();
+        // (a) should be a copy
+        expect(queues).to.not.equal(hermes._opts.queues);
+        // (b) should contain only the queues we specified
+        expect(queues).to.only.contain(connectionOpts.standard.queues);
+        done();
       });
     });
 
