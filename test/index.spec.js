@@ -272,6 +272,14 @@ describe('hermes', function () {
       });
     });
 
+    describe('#getQueues', function () {
+      it('should return the queues which which hermes was created', function (done) {
+        var hermes = new Hermes(connectionOpts.standard);
+        expect(hermes.getQueues()).to.deep.equal(connectionOpts.standard.queues);
+        done();
+      });
+    });
+
     describe('#_subscribeCallback', function () {
       it('should emit an error if channel is null', function (done) {
         var hermes = new Hermes(connectionOpts.standard);
