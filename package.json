@@ -1,6 +1,6 @@
 {
   "name": "runnable-hermes",
-  "version": "6.2.0",
+  "version": "6.2.1",
   "description": "RabbitMQ AMQPLIB EventEmitter style pub/sub interface abstraction",
   "repository": "https://github.com/Runnable/hermes",
   "main": "index.js",
