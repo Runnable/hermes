@@ -88,6 +88,12 @@ hermes.close(cb);
 hermes.connect(cb);
 
 /**
+ * Fetch an array of valid queues
+ * @returns Array<String>
+ */
+var queues = hermes.getQueues();
+
+/**
  * Hermes class extends events.EventEmitter and emits the following events:
  *   - 'publish'
  *   - 'subscribe'
