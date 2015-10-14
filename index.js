@@ -176,7 +176,7 @@ module.exports = Hermes;
  * @return {Array<String>} Queue names
  */
 Hermes.prototype.getQueues = function () {
-  return this._opts.queues;
+  return this._opts.queues.slice();
 };
 
 /**

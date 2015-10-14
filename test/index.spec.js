@@ -273,9 +273,13 @@ describe('hermes', function () {
     });
 
     describe('#getQueues', function () {
-      it('should return the queues which which hermes was created', function (done) {
+      it('should return a copy of the queues which which hermes was created', function (done) {
         var hermes = new Hermes(connectionOpts.standard);
-        expect(hermes.getQueues()).to.deep.equal(connectionOpts.standard.queues);
+        var queues = hermes.getQueues();
+        // (a) should be a copy
+        expect(queues).to.not.equal(hermes._opts.queues);
+        // (b) should contain only the queues we specified
+        expect(queues).to.only.contain(connectionOpts.standard.queues);
         done();
       });
     });
