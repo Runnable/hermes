@@ -19,7 +19,7 @@ methods.
   - Queues will be created as `durabale` queues, not `transient`. `persistent` messages will be saved to disk and survivie broker restarts. [Queue Durability](https://www.rabbitmq.com/tutorials/amqp-concepts.html#queue-durability)
 - Automatically buffers publish & subscribe calls until connection is established. (No need to wait for connection to be established before using `publish` or `subscribe` methods from your application.)
 - Tracks references to subscribe callbacks and provides functionality to stop receiving jobs for one or all task queues. (Very similar to EventEmitter unsubscribe functionality)
-- Autmatically encodes objects/strings as buffers on publish and decodes to JS Object literals for subscribe callbacks
+- Automatically encodes objects/strings as buffers on publish and decodes to JS Object literals for subscribe callbacks
 - Provides subscribe callback with simplified `done` method to send ack message to RabbitMQ and remove tasks from queue
 
 USAGE
