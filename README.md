@@ -1,7 +1,7 @@
 Hermes
 ======
 
-Simplified abstraction interface to [amqp.node](https://github.com/squaremo/amqp.node)  
+Simplified abstraction interface to [amqp.node](https://github.com/squaremo/amqp.node)
 
 [![Build Status](https://travis-ci.org/Runnable/hermes.svg)](https://travis-ci.org/Runnable/hermes)
 [![Code Climate](https://codeclimate.com/github/Runnable/hermes/badges/gpa.svg)](https://codeclimate.com/github/runnable/hermes)
@@ -9,13 +9,13 @@ Simplified abstraction interface to [amqp.node](https://github.com/squaremo/amqp
 [![Dependency Status](https://david-dm.org/Runnable/hermes.svg)](https://david-dm.org/runnable/hermes)
 [![devDependency Status](https://david-dm.org/Runnable/hermes/dev-status.svg)](https://david-dm.org/runnable/hermes#info=devDependencies)
 
-[![NPM](https://nodei.co/npm/runnable-hermes.png?compact=true)](https://nodei.co/npm/runnable-hermes/)  
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Runnable/hermes?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  
+[![NPM](https://nodei.co/npm/runnable-hermes.png?compact=true)](https://nodei.co/npm/runnable-hermes/)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Runnable/hermes?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Publish & subscribe to RabbitMQ queues with simplified publish & subscribe interface
-methods.  
+methods.
 
-- Connects to RabbitMQ server, establishes a channel, asserts defined queues 
+- Connects to RabbitMQ server, establishes a channel, asserts defined queues
   - Queues will be created as `durabale` queues, not `transient`. `persistent` messages will be saved to disk and survivie broker restarts. [Queue Durability](https://www.rabbitmq.com/tutorials/amqp-concepts.html#queue-durability)
 - Automatically buffers publish & subscribe calls until connection is established. (No need to wait for connection to be established before using `publish` or `subscribe` methods from your application.)
 - Tracks references to subscribe callbacks and provides functionality to stop receiving jobs for one or all task queues. (Very similar to EventEmitter unsubscribe functionality)
@@ -28,6 +28,8 @@ USAGE
 /**
  * Hermes attempts to connect to RabbitMQ upon instantiation,
  * throws if connection fails.
+ * If using Events, Hermes will throw if binding or asserting failed
+ * during connections
  */
 var hermes = require('runnable-hermes').hermesSingletonFactory({
   hostname: 'localhost',
@@ -39,6 +41,14 @@ var hermes = require('runnable-hermes').hermesSingletonFactory({
   queues: [ // queues to self-register with RabbitMQ on connect
     'task-queue-1',
     'task-queue-2'
+  ],
+  publishedEvents: [ // publish to fanout exchange
+    'task-queue-3',
+    'task-queue-4',
+  ],
+  subscribedEvents: [ // read from fanout exchanges
+    'task-queue-5',
+    'task-queue-6',
   ]
 }).connect();
 
@@ -52,7 +62,8 @@ var jobCallback = function (data, done) { //data automatically decoded into obje
  * connection to RabbitMQ has not yet been established
  *
  * Will throw if first argument is not a string representing
- * a valid RabbitMQ queue as defined in `queues` option
+ * a valid RabbitMQ queue as defined in `queues`,
+ * `publishedEvents`, or `subscribedEvents` options
  * passed to the constructor
  *
  * @param {String} queue name
@@ -107,7 +118,7 @@ hermes
   .on('ready', function () {
   console.log('hermes connected to RabbitMQ & queues asserted');
 });
- 
+
 hermes.on('publish', function (queueName, data) {
   console.log('hermes publish action', queueName, data);
 });

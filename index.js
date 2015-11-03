@@ -18,6 +18,7 @@ var util = require('util');
 var uuid = require('node-uuid');
 
 var assertOpts = require('./lib/assert-opts');
+var Events = require('./lib/events');
 
 var hermes;
 
@@ -44,6 +45,7 @@ function Hermes (opts, socketOpts) {
   this._publishQueue = [];
   this._socketOpts = socketOpts;
   this._subscribeQueue = [];
+  this._events = null;
 
   this.on('ready', function () {
     debug('hermes ready');
@@ -100,6 +102,11 @@ function Hermes (opts, socketOpts) {
    */
   function publish (queueName, data) {
     debug('channel.sendToQueue', queueName, data);
+
+    if (_this._events.isPublishEvent(queueName)) {
+      return _this._events.publish(queueName, data);
+    }
+
     _this._channel.sendToQueue(
       queueName, data, { persistent: _this._opts.persistent });
   }
@@ -116,6 +123,11 @@ function Hermes (opts, socketOpts) {
       cb.name
     ].join('-');
     _this._consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
+
+    if (_this._events.isSubscribeEvent(queueName)) {
+      return _this._events.subscribe(queueName,  _this._subscribeCallback(cb));
+    }
+
     _this._channel.consume(queueName, _this._subscribeCallback(cb), {
       consumerTag: consumerTag
     });
@@ -291,12 +303,28 @@ Hermes.prototype.connect = function (cb) {
         _this.emit('error', err);
       });
 
+      _this._events = new Events({
+        publishedEvents: _this.publishedEvents,
+        subscribedEvents: _this.subscribedEvents,
+        name: _this.opts.name,
+        channel: _this.channel
+      });
+
       async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
         ch.assertQueue(queueName, {durable: true}, forEachCb);
       }, function done (err) {
         if (err) { return cb(err); }
-        _this.emit('ready');
-        cb();
+
+        _this._events.createQueues(function (err) {
+          if (err) { return cb(err); }
+
+          _this._events.createExchanges(function (err) {
+            if (err) { return cb(err); }
+
+            _this.emit('ready');
+            cb();
+          });
+        });
       });
     });
   });
