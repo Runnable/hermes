@@ -18,7 +18,7 @@ var util = require('util');
 var uuid = require('node-uuid');
 
 var assertOpts = require('./lib/assert-opts');
-var Events = require('./lib/events');
+var EventJobs = require('./lib/event-jobs');
 
 var hermes;
 
@@ -45,7 +45,7 @@ function Hermes (opts, socketOpts) {
   this._publishQueue = [];
   this._socketOpts = socketOpts;
   this._subscribeQueue = [];
-  this._events = null;
+  this._eventJobs = null;
 
   this.on('ready', function () {
     debug('hermes ready');
@@ -103,8 +103,8 @@ function Hermes (opts, socketOpts) {
   function publish (queueName, data) {
     debug('channel.sendToQueue', queueName, data);
 
-    if (_this._events.isPublishEvent(queueName)) {
-      return _this._events.publish(queueName, data);
+    if (_this._eventJobs.isPublishEvent(queueName)) {
+      return _this._eventJobs.publish(queueName, data);
     }
 
     _this._channel.sendToQueue(
@@ -124,8 +124,8 @@ function Hermes (opts, socketOpts) {
     ].join('-');
     _this._consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
 
-    if (_this._events.isSubscribeEvent(queueName)) {
-      return _this._events.subscribe(queueName,  _this._subscribeCallback(cb));
+    if (_this._eventJobs.isSubscribeEvent(queueName)) {
+      return _this._eventJobs.subscribe(queueName,  _this._subscribeCallback(cb));
     }
 
     _this._channel.consume(queueName, _this._subscribeCallback(cb), {
@@ -201,7 +201,7 @@ Hermes.prototype.getQueues = function () {
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this._opts.queues.indexOf(queueName)&& !this._events.isPublishEvent(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName)&& !this._eventJobs.isPublishEvent(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -226,7 +226,7 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, handler) {
   debug('hermes subscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName) && !this._events.isSubscribeEvent(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
   if (handler.length < 2) {
@@ -248,7 +248,7 @@ Hermes.prototype.subscribe = function (queueName, handler) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName) && !this._events.isSubscribeEvent(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
@@ -288,47 +288,57 @@ Hermes.prototype.connect = function (cb) {
       err.reason = 'connection error';
       _this.emit('error', err);
     });
-    conn.createChannel(function (err, ch) {
+    _this._createChannel(cb);
+  });
+  return this;
+};
+
+Hermes.prototype._createChannel = function (cb) {
+  var _this = this;
+  _this._connection.createChannel(function (err, ch) {
+    if (err) { return cb(err); }
+    debug('rabbitmq channel created');
+    /**
+     * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
+     * (Message Durability)
+     */
+    _this._channel = ch;
+    // we need listen to the `error` otherwise it would be thrown
+    _this._channel.on('error', function (err) {
+      err = err || new Error('Channel error');
+      err.reason = 'channel error';
+      _this.emit('error', err);
+    });
+
+    _this._eventJobs = new EventJobs({
+      publishedEvents: _this._opts.publishedEvents,
+      subscribedEvents: _this._opts.subscribedEvents,
+      name: _this._opts.name,
+      channel: _this._channel
+    });
+
+    _this._setupChannel(cb);
+  });
+};
+
+Hermes.prototype._setupChannel = function (cb) {
+  var _this = this;
+
+  async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
+    _this._channel.assertQueue(queueName, {durable: true}, forEachCb);
+  }, function done (err) {
+    if (err) { return cb(err); }
+
+    _this._eventJobs.createQueues(function (err) {
       if (err) { return cb(err); }
-      debug('rabbitmq channel created');
-      /**
-       * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
-       * (Message Durability)
-       */
-      _this._channel = ch;
-      // we need listen to the `error` otherwise it would be thrown
-      _this._channel.on('error', function (err) {
-        err = err || new Error('Channel error');
-        err.reason = 'channel error';
-        _this.emit('error', err);
-      });
-
-      _this._events = new Events({
-        publishedEvents: _this._opts.publishedEvents,
-        subscribedEvents: _this._opts.subscribedEvents,
-        name: _this._opts.name,
-        channel: _this._channel
-      });
-
-      async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
-        _this._channel.assertQueue(queueName, {durable: true}, forEachCb);
-      }, function done (err) {
+      _this._eventJobs.createExchanges(function (err) {
         if (err) { return cb(err); }
 
-        _this._events.createQueues(function (err) {
-          if (err) { return cb(err); }
-
-          _this._events.createExchanges(function (err) {
-            if (err) { return cb(err); }
-
-            _this.emit('ready');
-            cb();
-          });
-        });
+        _this.emit('ready');
+        cb();
       });
     });
   });
-  return this;
 };
 
 /**
