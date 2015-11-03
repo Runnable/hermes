@@ -317,11 +317,11 @@ Hermes.prototype._createChannel = function (cb) {
       channel: _this._channel
     });
 
-    _this._setupChannel(cb);
+    _this._populateChannel(cb);
   });
 };
 
-Hermes.prototype._setupChannel = function (cb) {
+Hermes.prototype._populateChannel = function (cb) {
   var _this = this;
 
   async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
@@ -331,6 +331,7 @@ Hermes.prototype._setupChannel = function (cb) {
 
     _this._eventJobs.createQueues(function (err) {
       if (err) { return cb(err); }
+
       _this._eventJobs.createExchanges(function (err) {
         if (err) { return cb(err); }
 
