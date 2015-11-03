@@ -32,6 +32,7 @@ USAGE
  * during connections
  */
 var hermes = require('runnable-hermes').hermesSingletonFactory({
+  name: 'service name',
   hostname: 'localhost',
   port: '5672',
   username: 'guest',

@@ -201,7 +201,7 @@ Hermes.prototype.getQueues = function () {
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this._opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName)&& !this._events.isPublishEvent(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -226,7 +226,7 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, handler) {
   debug('hermes subscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName) && !this._events.isSubscribeEvent(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
   if (handler.length < 2) {
@@ -248,7 +248,7 @@ Hermes.prototype.subscribe = function (queueName, handler) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName) && !this._events.isSubscribeEvent(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
@@ -304,14 +304,14 @@ Hermes.prototype.connect = function (cb) {
       });
 
       _this._events = new Events({
-        publishedEvents: _this.publishedEvents,
-        subscribedEvents: _this.subscribedEvents,
-        name: _this.opts.name,
-        channel: _this.channel
+        publishedEvents: _this._opts.publishedEvents,
+        subscribedEvents: _this._opts.subscribedEvents,
+        name: _this._opts.name,
+        channel: _this._channel
       });
 
       async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
-        ch.assertQueue(queueName, {durable: true}, forEachCb);
+        _this._channel.assertQueue(queueName, {durable: true}, forEachCb);
       }, function done (err) {
         if (err) { return cb(err); }
 
