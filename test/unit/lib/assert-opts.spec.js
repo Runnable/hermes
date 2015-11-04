@@ -6,8 +6,7 @@
 var Code = require('code');
 var Lab = require('lab');
 
-var assertOpts = require('../../lib/assert-opts');
-var connectionOpts = require('../fixtures/connection-opts');
+var assertOpts = require('../../../lib/assert-opts');
 
 var lab = exports.lab = Lab.script();
 
