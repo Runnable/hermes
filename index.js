@@ -288,13 +288,20 @@ Hermes.prototype.connect = function (cb) {
       err.reason = 'connection error';
       _this.emit('error', err);
     });
+
     _this._createChannel(cb);
   });
   return this;
 };
 
+/**
+ * responsible for creating a channel
+ * should also initialize all queue modules
+ * @param  {Function} cb (err)
+ */
 Hermes.prototype._createChannel = function (cb) {
   var _this = this;
+
   _this._connection.createChannel(function (err, ch) {
     if (err) { return cb(err); }
     debug('rabbitmq channel created');
@@ -321,6 +328,10 @@ Hermes.prototype._createChannel = function (cb) {
   });
 };
 
+/**
+ * responsible for populating the channel with queues and exchanges
+ * @param  {Function} cb (err)
+ */
 Hermes.prototype._populateChannel = function (cb) {
   var _this = this;
 
