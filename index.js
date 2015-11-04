@@ -340,10 +340,10 @@ Hermes.prototype._populateChannel = function (cb) {
   }, function done (err) {
     if (err) { return cb(err); }
 
-    _this._eventJobs.createQueues(function (err) {
+    _this._eventJobs.createExchanges(function (err) {
       if (err) { return cb(err); }
 
-      _this._eventJobs.createExchanges(function (err) {
+      _this._eventJobs.createQueues(function (err) {
         if (err) { return cb(err); }
 
         _this.emit('ready');

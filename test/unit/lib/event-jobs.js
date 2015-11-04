@@ -29,18 +29,30 @@ describe('event-jobs.js unit test', function () {
 
     it('should construct with defaults', function (done) {
       var eventJobs = new EventJobs({
-        channel: 'testchannel'
+        channel: 'testchannel',
+        name: 'gober'
       });
       expect(eventJobs._publishedEvents).to.deep.equal([]);
       expect(eventJobs._subscribedEvents).to.deep.equal([]);
-      expect(eventJobs._name).to.equal('');
+      expect(eventJobs._name).to.equal('gober');
       expect(eventJobs._channel).to.equal('testchannel');
       done();
     });
 
     it('should throw if missing channel', function (done) {
       expect(function () {
-        new EventJobs({});
+        new EventJobs({
+          name: 'gober'
+        });
+      }).to.throw();
+      done();
+    });
+
+    it('should throw if missing name', function (done) {
+      expect(function () {
+        new EventJobs({
+          channel: 'gober'
+        });
       }).to.throw();
       done();
     });
@@ -49,7 +61,8 @@ describe('event-jobs.js unit test', function () {
   describe('isPublishEvent', function () {
     it('should be false if not in array (empty)', function (done) {
       var testEventJobs = new EventJobs({
-        channel: 'test'
+        channel: 'test',
+        name: 'gober'
       });
       expect(!!testEventJobs.isPublishEvent('test'))
         .to.be.false();
@@ -59,6 +72,7 @@ describe('event-jobs.js unit test', function () {
     it('should be false if not in array (full)', function (done) {
       var testEventJobs = new EventJobs({
         channel: 'test',
+        name: 'gober',
         publishedEvents: ['a', 'b', 'c']
       });
       expect(!!testEventJobs.isPublishEvent('test'))
@@ -69,6 +83,7 @@ describe('event-jobs.js unit test', function () {
     it('should be true if in array', function (done) {
       var testEventJobs = new EventJobs({
         channel: 'test',
+        name: 'gober',
         publishedEvents: ['a', 'b', 'c']
       });
       expect(!!testEventJobs.isPublishEvent('b'))
@@ -82,7 +97,8 @@ describe('event-jobs.js unit test', function () {
 
     beforeEach(function (done) {
       testEventJobs = new EventJobs({
-        channel: 'test'
+        channel: 'test',
+        name: 'gober'
       });
       testEventJobs._createExchange = sinon.stub();
       done();
@@ -112,7 +128,8 @@ describe('event-jobs.js unit test', function () {
       testEventJobs = new EventJobs({
         channel: {
           assertExchange: sinon.stub()
-        }
+        },
+        name: 'blue'
       });
       done();
     });
@@ -137,7 +154,8 @@ describe('event-jobs.js unit test', function () {
       testEventJobs = new EventJobs({
         channel: {
           publish: sinon.stub()
-        }
+        },
+        name: 'blue'
       });
       done();
     });
@@ -160,7 +178,8 @@ describe('event-jobs.js unit test', function () {
   describe('isSubscribeEvent', function () {
     it('should be false if not in array (empty)', function (done) {
       var testEventJobs = new EventJobs({
-        channel: 'test'
+        channel: 'test',
+        name: 'gober'
       });
       expect(!!testEventJobs.isSubscribeEvent('test'))
         .to.be.false();
@@ -170,6 +189,7 @@ describe('event-jobs.js unit test', function () {
     it('should be false if not in array (full)', function (done) {
       var testEventJobs = new EventJobs({
         channel: 'test',
+        name: 'gober',
         subscribedEvents: ['a', 'b', 'c']
       });
       expect(!!testEventJobs.isSubscribeEvent('test'))
@@ -180,6 +200,7 @@ describe('event-jobs.js unit test', function () {
     it('should be true if in array', function (done) {
       var testEventJobs = new EventJobs({
         channel: 'test',
+        name: 'gober',
         subscribedEvents: ['a', 'b', 'c']
       });
       expect(!!testEventJobs.isSubscribeEvent('b'))
@@ -193,7 +214,8 @@ describe('event-jobs.js unit test', function () {
 
     beforeEach(function (done) {
       testEventJobs = new EventJobs({
-        channel: 'test'
+        channel: 'test',
+        name: 'gober'
       });
       testEventJobs._createQueue = sinon.stub();
       done();
@@ -223,7 +245,8 @@ describe('event-jobs.js unit test', function () {
       testEventJobs = new EventJobs({
         channel: {
           publish: sinon.stub()
-        }
+        },
+        name: 'blue'
       });
       done();
     });
@@ -251,14 +274,15 @@ describe('event-jobs.js unit test', function () {
         channel: {
           assertQueue: sinon.stub(),
           bindQueue: sinon.stub()
-        }
+        },
+        name: 'blue'
       });
       done();
     });
 
     it('should call assertQueue and bindQueue', function (done) {
       var testEvent = 'ev';
-      var queueName = testEvent + 'queue';
+      var queueName = 'blue' + testEvent + '.queue';
       testEventJobs._channel.assertQueue.yieldsAsync();
       testEventJobs._channel.bindQueue.yieldsAsync();
 
@@ -277,7 +301,7 @@ describe('event-jobs.js unit test', function () {
     it('should call assertQueue and bindQueue with name appended', function (done) {
       var testName = 'myName';
       var testEvent = 'ev';
-      var queueName = testName + testEvent + 'queue';
+      var queueName = testName + testEvent + '.queue';
       testEventJobs._name = testName;
       testEventJobs._channel.assertQueue.yieldsAsync();
       testEventJobs._channel.bindQueue.yieldsAsync();
@@ -296,7 +320,7 @@ describe('event-jobs.js unit test', function () {
 
     it('should cb err when assertQueue failed', function (done) {
       var testEvent = 'ev';
-      var queueName = testEvent + 'queue';
+      var queueName = 'blue' + testEvent + '.queue';
       testEventJobs._channel.assertQueue.yieldsAsync('err');
 
       testEventJobs._createQueue(testEvent, function (err) {
@@ -318,14 +342,15 @@ describe('event-jobs.js unit test', function () {
       testEventJobs = new EventJobs({
         channel: {
           consume: sinon.stub()
-        }
+        },
+        name: 'blue'
       });
       done();
     });
 
     it('should call consume with empty name', function (done) {
       var testEvent = 'evt';
-      var queueName = testEvent + 'queue';
+      var queueName = 'blue' + testEvent + '.queue';
       testEventJobs._channel.consume.yieldsAsync();
 
       testEventJobs.subscribe(testEvent, function () {
@@ -339,7 +364,7 @@ describe('event-jobs.js unit test', function () {
     it('should call consume with name', function (done) {
       var testName = 'nemo';
       var testEvent = 'evt';
-      var queueName = testName + testEvent + 'queue';
+      var queueName = testName + testEvent + '.queue';
       testEventJobs._channel.consume.yieldsAsync();
       testEventJobs._name = testName;
 

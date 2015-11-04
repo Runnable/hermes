@@ -112,14 +112,14 @@ describe('index.js unit test', function () {
 
     it('should cb err if createExchanges failed', function (done) {
       testHermes._channel.assertQueue.yieldsAsync();
-      testHermes._eventJobs.createQueues.yieldsAsync();
-      testHermes._eventJobs.createExchanges.yieldsAsync('err');
+      testHermes._eventJobs.createExchanges.yieldsAsync();
+      testHermes._eventJobs.createQueues.yieldsAsync('err');
 
       testHermes._populateChannel(function (err) {
         expect(err).to.exist();
         expect(testHermes._channel.assertQueue.called).to.be.true();
-        expect(testHermes._eventJobs.createQueues.called).to.be.true();
         expect(testHermes._eventJobs.createExchanges.called).to.be.true();
+        expect(testHermes._eventJobs.createQueues.called).to.be.true();
         expect(testHermes.emit.withArgs('ready').called).to.be.false();
         done();
       });
@@ -127,13 +127,13 @@ describe('index.js unit test', function () {
 
     it('should cb err if createQueues failed', function (done) {
       testHermes._channel.assertQueue.yieldsAsync();
-      testHermes._eventJobs.createQueues.yieldsAsync('err');
+      testHermes._eventJobs.createExchanges.yieldsAsync('err');
 
       testHermes._populateChannel(function (err) {
         expect(err).to.exist();
         expect(testHermes._channel.assertQueue.called).to.be.true();
-        expect(testHermes._eventJobs.createQueues.called).to.be.true();
-        expect(testHermes._eventJobs.createExchanges.called).to.be.false();
+        expect(testHermes._eventJobs.createExchanges.called).to.be.true();
+        expect(testHermes._eventJobs.createQueues.called).to.be.false();
         expect(testHermes.emit.withArgs('ready').called).to.be.false();
         done();
       });
@@ -145,8 +145,8 @@ describe('index.js unit test', function () {
       testHermes._populateChannel(function (err) {
         expect(err).to.exist();
         expect(testHermes._channel.assertQueue.called).to.be.true();
-        expect(testHermes._eventJobs.createQueues.called).to.be.false();
         expect(testHermes._eventJobs.createExchanges.called).to.be.false();
+        expect(testHermes._eventJobs.createQueues.called).to.be.false();
         expect(testHermes.emit.withArgs('ready').called).to.be.false();
         done();
       });
