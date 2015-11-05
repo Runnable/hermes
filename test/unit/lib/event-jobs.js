@@ -282,7 +282,7 @@ describe('event-jobs.js unit test', function () {
 
     it('should call assertQueue and bindQueue', function (done) {
       var testEvent = 'ev';
-      var queueName = 'blue' + testEvent + '.queue';
+      var queueName = 'blue.ev.queue';
       testEventJobs._channel.assertQueue.yieldsAsync();
       testEventJobs._channel.bindQueue.yieldsAsync();
 
@@ -301,7 +301,7 @@ describe('event-jobs.js unit test', function () {
     it('should call assertQueue and bindQueue with name appended', function (done) {
       var testName = 'myName';
       var testEvent = 'ev';
-      var queueName = testName + testEvent + '.queue';
+      var queueName = 'myName.ev.queue';
       testEventJobs._name = testName;
       testEventJobs._channel.assertQueue.yieldsAsync();
       testEventJobs._channel.bindQueue.yieldsAsync();
@@ -320,7 +320,7 @@ describe('event-jobs.js unit test', function () {
 
     it('should cb err when assertQueue failed', function (done) {
       var testEvent = 'ev';
-      var queueName = 'blue' + testEvent + '.queue';
+      var queueName = 'blue.ev.queue';
       testEventJobs._channel.assertQueue.yieldsAsync('err');
 
       testEventJobs._createQueue(testEvent, function (err) {
@@ -350,7 +350,7 @@ describe('event-jobs.js unit test', function () {
 
     it('should call consume with empty name', function (done) {
       var testEvent = 'evt';
-      var queueName = 'blue' + testEvent + '.queue';
+      var queueName = 'blue.evt.queue';
       testEventJobs._channel.consume.yieldsAsync();
 
       testEventJobs.subscribe(testEvent, function () {
@@ -364,7 +364,7 @@ describe('event-jobs.js unit test', function () {
     it('should call consume with name', function (done) {
       var testName = 'nemo';
       var testEvent = 'evt';
-      var queueName = testName + testEvent + '.queue';
+      var queueName = 'nemo.evt.queue';
       testEventJobs._channel.consume.yieldsAsync();
       testEventJobs._name = testName;
 
