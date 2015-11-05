@@ -189,7 +189,9 @@ module.exports = Hermes;
  * @return {Array<String>} Queue names
  */
 Hermes.prototype.getQueues = function () {
-  return this._opts.queues.slice();
+  return this._opts.queues.slice().concat(
+    this._opts.publishedEvents.slice(),
+    this._opts.subscribedEvents.slice());
 };
 
 /**
