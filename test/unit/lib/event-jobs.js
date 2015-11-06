@@ -100,28 +100,28 @@ describe('event-jobs.js unit test', function () {
         channel: 'test',
         name: 'gober'
       });
-      testEventJobs._createExchange = sinon.stub();
+      testEventJobs._assertExchange = sinon.stub();
       done();
     });
 
     it('should do nothing if empty _publishedEvents', function (done) {
       testEventJobs.assertExchanges(function () {
-        expect(testEventJobs._createExchange.called).to.be.false();
+        expect(testEventJobs._assertExchange.called).to.be.false();
         done();
       });
     });
 
     it('should call create for each item', function (done) {
       testEventJobs._publishedEvents = ['a', 'b', 'c'];
-      testEventJobs._createExchange.yieldsAsync();
+      testEventJobs._assertExchange.yieldsAsync();
       testEventJobs.assertExchanges(function () {
-        expect(testEventJobs._createExchange.calledThrice).to.be.true();
+        expect(testEventJobs._assertExchange.calledThrice).to.be.true();
         done();
       });
     });
   }); // end assertExchanges
 
-  describe('_createExchange', function () {
+  describe('_assertExchange', function () {
     var testEventJobs;
 
     beforeEach(function (done) {
@@ -138,14 +138,14 @@ describe('event-jobs.js unit test', function () {
       var testName = 'name';
       testEventJobs._channel.assertExchange.yieldsAsync();
 
-      testEventJobs._createExchange(testName, function () {
+      testEventJobs._assertExchange(testName, function () {
         expect(testEventJobs._channel.assertExchange
           .withArgs(testName, 'fanout',  { durable: true })
           .called).to.be.true();
         done();
       });
     });
-  }); // end _createExchange
+  }); // end _assertExchange
 
   describe('publish', function () {
     var testEventJobs;
@@ -209,7 +209,7 @@ describe('event-jobs.js unit test', function () {
     });
   }); // end isSubscribeEvent
 
-  describe('createQueues', function () {
+  describe('_assertAndBindQueues', function () {
     var testEventJobs;
 
     beforeEach(function (done) {
@@ -217,26 +217,26 @@ describe('event-jobs.js unit test', function () {
         channel: 'test',
         name: 'gober'
       });
-      testEventJobs._createQueue = sinon.stub();
+      testEventJobs._assertAndBindQueue = sinon.stub();
       done();
     });
 
     it('should do nothing if empty _subscribedEvents', function (done) {
-      testEventJobs.createQueues(function () {
-        expect(testEventJobs._createQueue.called).to.be.false();
+      testEventJobs._assertAndBindQueues(function () {
+        expect(testEventJobs._assertAndBindQueue.called).to.be.false();
         done();
       });
     });
 
     it('should call create for each item', function (done) {
       testEventJobs._subscribedEvents = ['a', 'b', 'c'];
-      testEventJobs._createQueue.yieldsAsync();
-      testEventJobs.createQueues(function () {
-        expect(testEventJobs._createQueue.calledThrice).to.be.true();
+      testEventJobs._assertAndBindQueue.yieldsAsync();
+      testEventJobs._assertAndBindQueues(function () {
+        expect(testEventJobs._assertAndBindQueue.calledThrice).to.be.true();
         done();
       });
     });
-  }); // end createQueues
+  }); // end _assertAndBindQueues
 
   describe('publish', function () {
     var testEventJobs;
@@ -266,7 +266,7 @@ describe('event-jobs.js unit test', function () {
     });
   }); // end publish
 
-  describe('_createQueue', function () {
+  describe('_assertAndBindQueue', function () {
     var testEventJobs;
 
     beforeEach(function (done) {
@@ -286,7 +286,7 @@ describe('event-jobs.js unit test', function () {
       testEventJobs._channel.assertQueue.yieldsAsync();
       testEventJobs._channel.bindQueue.yieldsAsync();
 
-      testEventJobs._createQueue(testEvent, function (err) {
+      testEventJobs._assertAndBindQueue(testEvent, function (err) {
         expect(err).to.not.exist();
         expect(testEventJobs._channel.assertQueue
           .withArgs(queueName, { durable: true })
@@ -306,7 +306,7 @@ describe('event-jobs.js unit test', function () {
       testEventJobs._channel.assertQueue.yieldsAsync();
       testEventJobs._channel.bindQueue.yieldsAsync();
 
-      testEventJobs._createQueue(testEvent, function (err) {
+      testEventJobs._assertAndBindQueue(testEvent, function (err) {
         expect(err).to.not.exist();
         expect(testEventJobs._channel.assertQueue
           .withArgs(queueName, { durable: true })
@@ -323,7 +323,7 @@ describe('event-jobs.js unit test', function () {
       var queueName = 'blue.ev.queue';
       testEventJobs._channel.assertQueue.yieldsAsync('err');
 
-      testEventJobs._createQueue(testEvent, function (err) {
+      testEventJobs._assertAndBindQueue(testEvent, function (err) {
         expect(err).to.exist();
         expect(testEventJobs._channel.assertQueue
           .withArgs(queueName, { durable: true })
@@ -333,7 +333,7 @@ describe('event-jobs.js unit test', function () {
         done();
       });
     });
-  }); // end _createQueue
+  }); // end _assertAndBindQueue
 
   describe('subscribe', function () {
     var testEventJobs;

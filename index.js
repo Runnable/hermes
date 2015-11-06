@@ -345,7 +345,7 @@ Hermes.prototype._populateChannel = function (cb) {
     _this._eventJobs.assertExchanges(function (err) {
       if (err) { return cb(err); }
 
-      _this._eventJobs.createQueues(function (err) {
+      _this._eventJobs._assertAndBindQueues(function (err) {
         if (err) { return cb(err); }
 
         _this.emit('ready');
