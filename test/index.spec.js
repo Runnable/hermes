@@ -90,20 +90,20 @@ describe('hermes', function () {
       hermes = new HermesClass(opts);
       hermes.connect();
       sinon.stub(Events.prototype, 'createQueues');
-      sinon.stub(Events.prototype, 'createExchanges');
+      sinon.stub(Events.prototype, 'assertExchanges');
       done();
     });
 
     afterEach(function (done) {
       hermesAmqplib.connect.restore();
       Events.prototype.createQueues.restore();
-      Events.prototype.createExchanges.restore();
+      Events.prototype.assertExchanges.restore();
       done();
     });
 
     it('should automatically queue subscribe invocations until connected to RabbitMQ server', function (done) {
       Events.prototype.createQueues.yields();
-      Events.prototype.createExchanges.yields();
+      Events.prototype.assertExchanges.yields();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var subscribeCB = function (data, done) {};
@@ -118,7 +118,7 @@ describe('hermes', function () {
 
     it('should automatically queue publish invocations until connected to RabbitMQ server', function (done) {
       Events.prototype.createQueues.yields();
-      Events.prototype.createExchanges.yields();
+      Events.prototype.assertExchanges.yields();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var testData = {foo: 'bar'};
@@ -194,7 +194,7 @@ describe('hermes', function () {
 
     it('should unsubscribe workers from rabbitmq (all workers in queue)', function (done) {
       Events.prototype.createQueues.yields();
-      Events.prototype.createExchanges.yields();
+      Events.prototype.assertExchanges.yields();
       var callback = sinon.spy();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
@@ -220,7 +220,7 @@ describe('hermes', function () {
 
     it('should unsubscribe workers from rabbitmq (specific workers in queue)', function (done) {
       Events.prototype.createQueues.yields();
-      Events.prototype.createExchanges.yields();
+      Events.prototype.assertExchanges.yields();
       var callback = sinon.spy();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...

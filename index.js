@@ -203,7 +203,7 @@ Hermes.prototype.getQueues = function () {
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this._opts.queues.indexOf(queueName)&& !this._eventJobs.isPublishEvent(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isPublishEvent(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -342,7 +342,7 @@ Hermes.prototype._populateChannel = function (cb) {
   }, function done (err) {
     if (err) { return cb(err); }
 
-    _this._eventJobs.createExchanges(function (err) {
+    _this._eventJobs.assertExchanges(function (err) {
       if (err) { return cb(err); }
 
       _this._eventJobs.createQueues(function (err) {

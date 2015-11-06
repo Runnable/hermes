@@ -45,11 +45,11 @@ var hermes = require('runnable-hermes').hermesSingletonFactory({
   ],
   publishedEvents: [ // publish to fanout exchange
     'task-queue-3',
-    'task-queue-4',
+    'task-queue-4'
   ],
   subscribedEvents: [ // read from fanout exchanges
     'task-queue-5',
-    'task-queue-6',
+    'task-queue-6'
   ]
 }).connect();
 

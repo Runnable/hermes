@@ -92,7 +92,7 @@ describe('event-jobs.js unit test', function () {
     });
   }); // end isPublishEvent
 
-  describe('createExchanges', function () {
+  describe('assertExchanges', function () {
     var testEventJobs;
 
     beforeEach(function (done) {
@@ -105,7 +105,7 @@ describe('event-jobs.js unit test', function () {
     });
 
     it('should do nothing if empty _publishedEvents', function (done) {
-      testEventJobs.createExchanges(function () {
+      testEventJobs.assertExchanges(function () {
         expect(testEventJobs._createExchange.called).to.be.false();
         done();
       });
@@ -114,12 +114,12 @@ describe('event-jobs.js unit test', function () {
     it('should call create for each item', function (done) {
       testEventJobs._publishedEvents = ['a', 'b', 'c'];
       testEventJobs._createExchange.yieldsAsync();
-      testEventJobs.createExchanges(function () {
+      testEventJobs.assertExchanges(function () {
         expect(testEventJobs._createExchange.calledThrice).to.be.true();
         done();
       });
     });
-  }); // end createExchanges
+  }); // end assertExchanges
 
   describe('_createExchange', function () {
     var testEventJobs;
