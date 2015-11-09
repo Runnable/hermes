@@ -84,7 +84,7 @@ describe('hermes', function () {
         };
       });
 
-      var opts = { queues: [TEST_QUEUE] };
+      var opts = { queues: [TEST_QUEUE], prefetch: 10 };
       defaults(opts, connectionOpts.standard);
       hermes = new HermesClass(opts);
       hermes.connect();
@@ -120,6 +120,18 @@ describe('hermes', function () {
       connectFinish();
       // all queued subscribe jobs are complete
       expect(hermes._publishQueue).to.have.length(0);
+      done();
+    });
+
+    it('should set the prefetch option when passed', function (done) {
+      expect(hermesAmqplib.connect.callCount).to.equal(1);
+      connectFinish();
+      // connected...
+      sinon.assert.calledOnce(channel.prefetch);
+      sinon.assert.calledWithExactly(
+        channel.prefetch,
+        10
+      );
       done();
     });
 

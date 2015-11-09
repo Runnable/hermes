@@ -18,6 +18,7 @@ FakeChannel.prototype.assertQueue = noop;
 FakeChannel.prototype.consume = noop;
 FakeChannel.prototype.sendToQueue = noop;
 FakeChannel.prototype.cancel = noop;
+FakeChannel.prototype.prefetch = noop;
 
 /**
  * @param {Array} callbacks
@@ -35,5 +36,6 @@ module.exports = function () {
   sinon.stub(fakeChannel, 'cancel', function (consumerTag, callback) {
     callback();
   });
+  sinon.stub(fakeChannel, 'prefetch').returns();
   return fakeChannel;
 };

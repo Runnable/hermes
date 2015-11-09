@@ -15,7 +15,7 @@ Simplified abstraction interface to [amqp.node](https://github.com/squaremo/amqp
 Publish & subscribe to RabbitMQ queues with simplified publish & subscribe interface
 methods.  
 
-- Connects to RabbitMQ server, establishes a channel, asserts defined queues 
+- Connects to RabbitMQ server, establishes a channel, asserts defined queues
   - Queues will be created as `durabale` queues, not `transient`. `persistent` messages will be saved to disk and survivie broker restarts. [Queue Durability](https://www.rabbitmq.com/tutorials/amqp-concepts.html#queue-durability)
 - Automatically buffers publish & subscribe calls until connection is established. (No need to wait for connection to be established before using `publish` or `subscribe` methods from your application.)
 - Tracks references to subscribe callbacks and provides functionality to stop receiving jobs for one or all task queues. (Very similar to EventEmitter unsubscribe functionality)
@@ -34,8 +34,9 @@ var hermes = require('runnable-hermes').hermesSingletonFactory({
   port: '5672',
   username: 'guest',
   password: 'guest',
-  heartbeat: 10, // default 0 (no timeout),
+  heartbeat: 10, // default 0 (no timeout)
   persistent: true, // default true (messages will survive a broker restart event)
+  prefetch: 10 // sets the consumer prefetch for the channel (default to not being applied)
   queues: [ // queues to self-register with RabbitMQ on connect
     'task-queue-1',
     'task-queue-2'
@@ -107,7 +108,7 @@ hermes
   .on('ready', function () {
   console.log('hermes connected to RabbitMQ & queues asserted');
 });
- 
+
 hermes.on('publish', function (queueName, data) {
   console.log('hermes publish action', queueName, data);
 });
