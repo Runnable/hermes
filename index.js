@@ -287,6 +287,9 @@ Hermes.prototype.connect = function (cb) {
       }, function done (err) {
         if (err) { return cb(err); }
         _this._channel = ch;
+        if (_this._opts.prefetch) {
+          _this._channel.prefetch(_this._opts.prefetch);
+        }
         // we need listen to the `error` otherwise it would be thrown
         _this._channel.on('error', function (err) {
           err = err || new Error('Channel error');
