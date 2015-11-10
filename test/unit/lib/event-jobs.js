@@ -185,7 +185,7 @@ describe('event-jobs.js unit test', function () {
       done();
     });
 
-    it('should call publish', function (done) {
+    it('should call publish with default routingKey', function (done) {
       var testName = 'name';
       var testData = 'somdat';
 
@@ -195,6 +195,21 @@ describe('event-jobs.js unit test', function () {
 
       expect(testEventJobs._channel.publish
         .withArgs(testName, '',  testData)
+        .called).to.be.true();
+      done();
+    });
+
+    it('should call publish with routingKey', function (done) {
+      var testName = 'name';
+      var testData = 'somdat';
+      var testKey = 'padlock';
+
+      testEventJobs._channel.publish.returns();
+
+      testEventJobs.publish(testName, testData, testKey);
+
+      expect(testEventJobs._channel.publish
+        .withArgs(testName, testKey,  testData)
         .called).to.be.true();
       done();
     });
