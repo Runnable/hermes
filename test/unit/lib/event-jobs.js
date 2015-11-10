@@ -23,7 +23,6 @@ describe('event-jobs.js unit test', function () {
       expect(eventJobs._publishedEvents).to.equal('testpublishedEvents');
       expect(eventJobs._subscribedEvents).to.equal('testsubscribedEvents');
       expect(eventJobs._name).to.equal('testName');
-      expect(eventJobs._channel).to.equal('testchannel');
       done();
     });
 
@@ -35,7 +34,6 @@ describe('event-jobs.js unit test', function () {
       expect(eventJobs._publishedEvents).to.deep.equal([]);
       expect(eventJobs._subscribedEvents).to.deep.equal([]);
       expect(eventJobs._name).to.equal('gober');
-      expect(eventJobs._channel).to.equal('testchannel');
       done();
     });
 
@@ -48,6 +46,26 @@ describe('event-jobs.js unit test', function () {
       done();
     });
   }); // end constructor
+
+  describe('setChannel', function () {
+    var testEventJobs;
+
+    beforeEach(function (done) {
+      testEventJobs = new EventJobs({
+        name: 'blue'
+      });
+      done();
+    });
+
+    it('should set channel', function (done) {
+      var testCh = {
+        test: 'channel'
+      };
+      testEventJobs.setChannel(testCh);
+      expect(testEventJobs._channel).to.deep.equal(testCh);
+      done();
+    });
+  }); // end setChannel
 
   describe('isPublishEvent', function () {
     it('should be false if not in array (empty)', function (done) {
@@ -95,6 +113,14 @@ describe('event-jobs.js unit test', function () {
       done();
     });
 
+    it('should throw if no channel', function (done) {
+      delete testEventJobs._channel;
+      expect(function () {
+        testEventJobs.assertExchanges();
+      }).to.throw();
+      done();
+    });
+
     it('should do nothing if empty _publishedEvents', function (done) {
       testEventJobs.assertExchanges(function () {
         expect(testEventJobs._assertExchange.called).to.be.false();
@@ -117,10 +143,10 @@ describe('event-jobs.js unit test', function () {
 
     beforeEach(function (done) {
       testEventJobs = new EventJobs({
-        channel: {
-          assertExchange: sinon.stub()
-        },
         name: 'blue'
+      });
+      testEventJobs.setChannel({
+        assertExchange: sinon.stub()
       });
       done();
     });
@@ -143,11 +169,19 @@ describe('event-jobs.js unit test', function () {
 
     beforeEach(function (done) {
       testEventJobs = new EventJobs({
-        channel: {
-          publish: sinon.stub()
-        },
         name: 'blue'
       });
+      testEventJobs.setChannel({
+        publish: sinon.stub()
+      });
+      done();
+    });
+
+    it('should throw if no channel', function (done) {
+      delete testEventJobs._channel;
+      expect(function () {
+        testEventJobs.publish();
+      }).to.throw();
       done();
     });
 
@@ -169,7 +203,6 @@ describe('event-jobs.js unit test', function () {
   describe('isSubscribeEvent', function () {
     it('should be false if not in array (empty)', function (done) {
       var testEventJobs = new EventJobs({
-        channel: 'test',
         name: 'gober'
       });
       expect(!!testEventJobs.isSubscribeEvent('test'))
@@ -179,7 +212,6 @@ describe('event-jobs.js unit test', function () {
 
     it('should be false if not in array (full)', function (done) {
       var testEventJobs = new EventJobs({
-        channel: 'test',
         name: 'gober',
         subscribedEvents: ['a', 'b', 'c']
       });
@@ -190,7 +222,6 @@ describe('event-jobs.js unit test', function () {
 
     it('should be true if in array', function (done) {
       var testEventJobs = new EventJobs({
-        channel: 'test',
         name: 'gober',
         subscribedEvents: ['a', 'b', 'c']
       });
@@ -200,20 +231,30 @@ describe('event-jobs.js unit test', function () {
     });
   }); // end isSubscribeEvent
 
-  describe('_assertAndBindQueues', function () {
+  describe('assertAndBindQueues', function () {
     var testEventJobs;
 
     beforeEach(function (done) {
       testEventJobs = new EventJobs({
-        channel: 'test',
         name: 'gober'
+      });
+      testEventJobs.setChannel({
+        test: 'channel'
       });
       testEventJobs._assertAndBindQueue = sinon.stub();
       done();
     });
 
+    it('should throw if no channel', function (done) {
+      delete testEventJobs._channel;
+      expect(function () {
+        testEventJobs.assertAndBindQueues();
+      }).to.throw();
+      done();
+    });
+
     it('should do nothing if empty _subscribedEvents', function (done) {
-      testEventJobs._assertAndBindQueues(function () {
+      testEventJobs.assertAndBindQueues(function () {
         expect(testEventJobs._assertAndBindQueue.called).to.be.false();
         done();
       });
@@ -222,51 +263,23 @@ describe('event-jobs.js unit test', function () {
     it('should call create for each item', function (done) {
       testEventJobs._subscribedEvents = ['a', 'b', 'c'];
       testEventJobs._assertAndBindQueue.yieldsAsync();
-      testEventJobs._assertAndBindQueues(function () {
+      testEventJobs.assertAndBindQueues(function () {
         expect(testEventJobs._assertAndBindQueue.calledThrice).to.be.true();
         done();
       });
     });
-  }); // end _assertAndBindQueues
-
-  describe('publish', function () {
-    var testEventJobs;
-
-    beforeEach(function (done) {
-      testEventJobs = new EventJobs({
-        channel: {
-          publish: sinon.stub()
-        },
-        name: 'blue'
-      });
-      done();
-    });
-
-    it('should call publish', function (done) {
-      var testName = 'name';
-      var testData = 'somdat';
-
-      testEventJobs._channel.publish.returns();
-
-      testEventJobs.publish(testName, testData);
-
-      expect(testEventJobs._channel.publish
-        .withArgs(testName, '',  testData)
-        .called).to.be.true();
-      done();
-    });
-  }); // end publish
+  }); // end assertAndBindQueues
 
   describe('_assertAndBindQueue', function () {
     var testEventJobs;
 
     beforeEach(function (done) {
       testEventJobs = new EventJobs({
-        channel: {
-          assertQueue: sinon.stub(),
-          bindQueue: sinon.stub()
-        },
         name: 'blue'
+      });
+      testEventJobs.setChannel({
+        assertQueue: sinon.stub(),
+        bindQueue: sinon.stub()
       });
       done();
     });
@@ -331,11 +344,19 @@ describe('event-jobs.js unit test', function () {
 
     beforeEach(function (done) {
       testEventJobs = new EventJobs({
-        channel: {
-          consume: sinon.stub()
-        },
         name: 'blue'
       });
+      testEventJobs.setChannel({
+        consume: sinon.stub()
+      });
+      done();
+    });
+
+    it('should throw if no channel', function (done) {
+      delete testEventJobs._channel;
+      expect(function () {
+        testEventJobs.subscribe();
+      }).to.throw();
       done();
     });
 

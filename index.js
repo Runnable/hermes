@@ -45,7 +45,12 @@ function Hermes (opts, socketOpts) {
   this._publishQueue = [];
   this._socketOpts = socketOpts;
   this._subscribeQueue = [];
-  this._eventJobs = null;
+
+  this._eventJobs = new EventJobs({
+    publishedEvents: this._opts.publishedEvents,
+    subscribedEvents: this._opts.subscribedEvents,
+    name: this._opts.name
+  });
 
   this.on('ready', function () {
     debug('hermes ready');
@@ -278,13 +283,10 @@ Hermes.prototype.connect = function (cb) {
     '?',
     querystring.stringify(this._socketOpts)
   ].join('');
-  this._eventJobs = new EventJobs({
-    publishedEvents: this._opts.publishedEvents,
-    subscribedEvents: this._opts.subscribedEvents,
-    name: this._opts.name
-  });
+
   debug('connectionUrl', connectionUrl);
   debug('socketOpts', this._socketOpts);
+
   amqplib.connect(connectionUrl, this._socketOpts, function (err, conn) {
     if (err) { return cb(err); }
     debug('rabbitmq connected');
@@ -320,7 +322,8 @@ Hermes.prototype._createChannel = function (cb) {
     if (_this._opts.prefetch) {
       _this._channel.prefetch(_this._opts.prefetch);
     }
-    _this._eventJobs._channel = ch;
+
+    _this._eventJobs.setChannel(ch);
     // we need listen to the `error` otherwise it would be thrown
     _this._channel.on('error', function (err) {
       err = err || new Error('Channel error');
@@ -347,7 +350,7 @@ Hermes.prototype._populateChannel = function (cb) {
     _this._eventJobs.assertExchanges(function (err) {
       if (err) { return cb(err); }
 
-      _this._eventJobs._assertAndBindQueues(function (err) {
+      _this._eventJobs.assertAndBindQueues(function (err) {
         if (err) { return cb(err); }
         _this.emit('ready');
         cb();

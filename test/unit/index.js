@@ -87,7 +87,7 @@ describe('index.js unit test', function () {
         assertQueue: sinon.stub()
       };
       testHermes._eventJobs = {
-        _assertAndBindQueues: sinon.stub(),
+        assertAndBindQueues: sinon.stub(),
         assertExchanges: sinon.stub()
       };
       testHermes.emit = sinon.stub();
@@ -96,14 +96,14 @@ describe('index.js unit test', function () {
 
     it('should add all queues and exchanges', function (done) {
       testHermes._channel.assertQueue.yieldsAsync();
-      testHermes._eventJobs._assertAndBindQueues.yieldsAsync();
+      testHermes._eventJobs.assertAndBindQueues.yieldsAsync();
       testHermes._eventJobs.assertExchanges.yieldsAsync();
       testHermes.emit.returns();
 
       testHermes._populateChannel(function (err) {
         expect(err).to.not.exist();
         expect(testHermes._channel.assertQueue.called).to.be.true();
-        expect(testHermes._eventJobs._assertAndBindQueues.called).to.be.true();
+        expect(testHermes._eventJobs.assertAndBindQueues.called).to.be.true();
         expect(testHermes._eventJobs.assertExchanges.called).to.be.true();
         expect(testHermes.emit.withArgs('ready').called).to.be.true();
         done();
@@ -113,19 +113,19 @@ describe('index.js unit test', function () {
     it('should cb err if assertExchanges failed', function (done) {
       testHermes._channel.assertQueue.yieldsAsync();
       testHermes._eventJobs.assertExchanges.yieldsAsync();
-      testHermes._eventJobs._assertAndBindQueues.yieldsAsync('err');
+      testHermes._eventJobs.assertAndBindQueues.yieldsAsync('err');
 
       testHermes._populateChannel(function (err) {
         expect(err).to.exist();
         expect(testHermes._channel.assertQueue.called).to.be.true();
         expect(testHermes._eventJobs.assertExchanges.called).to.be.true();
-        expect(testHermes._eventJobs._assertAndBindQueues.called).to.be.true();
+        expect(testHermes._eventJobs.assertAndBindQueues.called).to.be.true();
         expect(testHermes.emit.withArgs('ready').called).to.be.false();
         done();
       });
     });
 
-    it('should cb err if _assertAndBindQueues failed', function (done) {
+    it('should cb err if assertAndBindQueues failed', function (done) {
       testHermes._channel.assertQueue.yieldsAsync();
       testHermes._eventJobs.assertExchanges.yieldsAsync('err');
 
@@ -133,7 +133,7 @@ describe('index.js unit test', function () {
         expect(err).to.exist();
         expect(testHermes._channel.assertQueue.called).to.be.true();
         expect(testHermes._eventJobs.assertExchanges.called).to.be.true();
-        expect(testHermes._eventJobs._assertAndBindQueues.called).to.be.false();
+        expect(testHermes._eventJobs.assertAndBindQueues.called).to.be.false();
         expect(testHermes.emit.withArgs('ready').called).to.be.false();
         done();
       });
@@ -146,7 +146,7 @@ describe('index.js unit test', function () {
         expect(err).to.exist();
         expect(testHermes._channel.assertQueue.called).to.be.true();
         expect(testHermes._eventJobs.assertExchanges.called).to.be.false();
-        expect(testHermes._eventJobs._assertAndBindQueues.called).to.be.false();
+        expect(testHermes._eventJobs.assertAndBindQueues.called).to.be.false();
         expect(testHermes.emit.withArgs('ready').called).to.be.false();
         done();
       });
