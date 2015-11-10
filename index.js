@@ -278,6 +278,11 @@ Hermes.prototype.connect = function (cb) {
     '?',
     querystring.stringify(this._socketOpts)
   ].join('');
+  this._eventJobs = new EventJobs({
+    publishedEvents: this._opts.publishedEvents,
+    subscribedEvents: this._opts.subscribedEvents,
+    name: this._opts.name
+  });
   debug('connectionUrl', connectionUrl);
   debug('socketOpts', this._socketOpts);
   amqplib.connect(connectionUrl, this._socketOpts, function (err, conn) {
@@ -312,18 +317,12 @@ Hermes.prototype._createChannel = function (cb) {
      * (Message Durability)
      */
     _this._channel = ch;
+    _this._eventJobs._channel = ch;
     // we need listen to the `error` otherwise it would be thrown
     _this._channel.on('error', function (err) {
       err = err || new Error('Channel error');
       err.reason = 'channel error';
       _this.emit('error', err);
-    });
-
-    _this._eventJobs = new EventJobs({
-      publishedEvents: _this._opts.publishedEvents,
-      subscribedEvents: _this._opts.subscribedEvents,
-      name: _this._opts.name,
-      channel: _this._channel
     });
 
     _this._populateChannel(cb);

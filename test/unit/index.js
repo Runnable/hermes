@@ -41,6 +41,7 @@ describe('index.js unit test', function () {
         expect(err).to.not.exist();
         expect(Hermes.prototype._createChannel.called).to.be.true();
         expect(stubOn.withArgs('error').called).to.be.true();
+        expect(testHermes._eventJobs).to.exist();
         done();
       });
     });
@@ -62,7 +63,7 @@ describe('index.js unit test', function () {
       done();
     });
 
-    it('should call _populateChannel and setup error and create _eventJobs', function (done) {
+    it('should call _populateChannel and setup error', function (done) {
       var stubOn = sinon.stub();
       testHermes._connection.createChannel.yieldsAsync(null, {
         on: stubOn
@@ -71,7 +72,6 @@ describe('index.js unit test', function () {
 
       testHermes._createChannel(function (err) {
         expect(err).to.not.exist();
-        expect(testHermes._eventJobs).to.exist();
         expect(Hermes.prototype._populateChannel.called).to.be.true();
         expect(stubOn.withArgs('error').called).to.be.true();
         done();

@@ -39,15 +39,6 @@ describe('event-jobs.js unit test', function () {
       done();
     });
 
-    it('should throw if missing channel', function (done) {
-      expect(function () {
-        new EventJobs({
-          name: 'gober'
-        });
-      }).to.throw();
-      done();
-    });
-
     it('should throw if missing name', function (done) {
       expect(function () {
         new EventJobs({
@@ -97,9 +88,9 @@ describe('event-jobs.js unit test', function () {
 
     beforeEach(function (done) {
       testEventJobs = new EventJobs({
-        channel: 'test',
         name: 'gober'
       });
+      testEventJobs._channel = 'test';
       testEventJobs._assertExchange = sinon.stub();
       done();
     });
