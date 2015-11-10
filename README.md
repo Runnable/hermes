@@ -37,8 +37,9 @@ var hermes = require('runnable-hermes').hermesSingletonFactory({
   port: '5672',
   username: 'guest',
   password: 'guest',
-  heartbeat: 10, // default 0 (no timeout),
+  heartbeat: 10, // default 0 (no timeout)
   persistent: true, // default true (messages will survive a broker restart event)
+  prefetch: 10 // sets the consumer prefetch for the channel (default to not being applied)
   queues: [ // queues to self-register with RabbitMQ on connect
     'task-queue-1',
     'task-queue-2'

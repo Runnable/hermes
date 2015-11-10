@@ -317,6 +317,9 @@ Hermes.prototype._createChannel = function (cb) {
      * (Message Durability)
      */
     _this._channel = ch;
+    if (_this._opts.prefetch) {
+      _this._channel.prefetch(_this._opts.prefetch);
+    }
     _this._eventJobs._channel = ch;
     // we need listen to the `error` otherwise it would be thrown
     _this._channel.on('error', function (err) {
@@ -346,7 +349,6 @@ Hermes.prototype._populateChannel = function (cb) {
 
       _this._eventJobs._assertAndBindQueues(function (err) {
         if (err) { return cb(err); }
-
         _this.emit('ready');
         cb();
       });
