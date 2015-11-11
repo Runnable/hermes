@@ -18,6 +18,7 @@ var util = require('util');
 var uuid = require('node-uuid');
 
 var assertOpts = require('./lib/assert-opts');
+var EventJobs = require('./lib/event-jobs');
 
 var hermes;
 
@@ -44,6 +45,13 @@ function Hermes (opts, socketOpts) {
   this._publishQueue = [];
   this._socketOpts = socketOpts;
   this._subscribeQueue = [];
+
+  this._eventJobs = new EventJobs({
+    publishedEvents: this._opts.publishedEvents,
+    subscribedEvents: this._opts.subscribedEvents,
+    name: this._opts.name
+  });
+
   this.on('ready', function () {
     debug('hermes ready');
     var args;
@@ -99,6 +107,11 @@ function Hermes (opts, socketOpts) {
    */
   function publish (queueName, data) {
     debug('channel.sendToQueue', queueName, data);
+
+    if (_this._eventJobs.isPublishEvent(queueName)) {
+      return _this._eventJobs.publish(queueName, data);
+    }
+
     _this._channel.sendToQueue(
       queueName, data, { persistent: _this._opts.persistent });
   }
@@ -115,6 +128,11 @@ function Hermes (opts, socketOpts) {
       cb.name
     ].join('-');
     _this._consumerTags[consumerTag] = Array.prototype.slice.call(arguments);
+
+    if (_this._eventJobs.isSubscribeEvent(queueName)) {
+      return _this._eventJobs.subscribe(queueName,  _this._subscribeCallback(cb));
+    }
+
     _this._channel.consume(queueName, _this._subscribeCallback(cb), {
       consumerTag: consumerTag
     });
@@ -176,7 +194,9 @@ module.exports = Hermes;
  * @return {Array<String>} Queue names
  */
 Hermes.prototype.getQueues = function () {
-  return this._opts.queues.slice();
+  return this._opts.queues.slice().concat(
+    this._opts.publishedEvents.slice(),
+    this._opts.subscribedEvents.slice());
 };
 
 /**
@@ -188,7 +208,7 @@ Hermes.prototype.getQueues = function () {
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this._opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isPublishEvent(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -213,7 +233,7 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, handler) {
   debug('hermes subscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: '+queueName);
   }
   if (handler.length < 2) {
@@ -235,7 +255,7 @@ Hermes.prototype.subscribe = function (queueName, handler) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName)) {
+  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
@@ -263,8 +283,10 @@ Hermes.prototype.connect = function (cb) {
     '?',
     querystring.stringify(this._socketOpts)
   ].join('');
+
   debug('connectionUrl', connectionUrl);
   debug('socketOpts', this._socketOpts);
+
   amqplib.connect(connectionUrl, this._socketOpts, function (err, conn) {
     if (err) { return cb(err); }
     debug('rabbitmq connected');
@@ -275,33 +297,66 @@ Hermes.prototype.connect = function (cb) {
       err.reason = 'connection error';
       _this.emit('error', err);
     });
-    conn.createChannel(function (err, ch) {
+
+    _this._createChannel(cb);
+  });
+  return this;
+};
+
+/**
+ * responsible for creating a channel
+ * should also initialize all queue modules
+ * @param  {Function} cb (err)
+ */
+Hermes.prototype._createChannel = function (cb) {
+  var _this = this;
+
+  _this._connection.createChannel(function (err, ch) {
+    if (err) { return cb(err); }
+    debug('rabbitmq channel created');
+    /**
+     * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
+     * (Message Durability)
+     */
+    _this._channel = ch;
+    if (_this._opts.prefetch) {
+      _this._channel.prefetch(_this._opts.prefetch);
+    }
+
+    _this._eventJobs.setChannel(ch);
+    // we need listen to the `error` otherwise it would be thrown
+    _this._channel.on('error', function (err) {
+      err = err || new Error('Channel error');
+      err.reason = 'channel error';
+      _this.emit('error', err);
+    });
+
+    _this._populateChannel(cb);
+  });
+};
+
+/**
+ * responsible for populating the channel with queues and exchanges
+ * @param  {Function} cb (err)
+ */
+Hermes.prototype._populateChannel = function (cb) {
+  var _this = this;
+
+  async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
+    _this._channel.assertQueue(queueName, {durable: true}, forEachCb);
+  }, function done (err) {
+    if (err) { return cb(err); }
+
+    _this._eventJobs.assertExchanges(function (err) {
       if (err) { return cb(err); }
-      debug('rabbitmq channel created');
-      /**
-       * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
-       * (Message Durability)
-       */
-      async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
-        ch.assertQueue(queueName, {durable: true}, forEachCb);
-      }, function done (err) {
+
+      _this._eventJobs.assertAndBindQueues(function (err) {
         if (err) { return cb(err); }
-        _this._channel = ch;
-        if (_this._opts.prefetch) {
-          _this._channel.prefetch(_this._opts.prefetch);
-        }
-        // we need listen to the `error` otherwise it would be thrown
-        _this._channel.on('error', function (err) {
-          err = err || new Error('Channel error');
-          err.reason = 'channel error';
-          _this.emit('error', err);
-        });
         _this.emit('ready');
         cb();
       });
     });
   });
-  return this;
 };
 
 /**

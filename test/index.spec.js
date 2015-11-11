@@ -10,6 +10,7 @@ var sinon = require('sinon');
 var defaults = require('101/defaults');
 
 var Hermes = rewire('../index');
+var Events = require('../lib/event-jobs');
 
 var connectionOpts = require('./fixtures/connection-opts');
 var mockChannel = require('./fixtures/mock-channel');
@@ -88,16 +89,21 @@ describe('hermes', function () {
       defaults(opts, connectionOpts.standard);
       hermes = new HermesClass(opts);
       hermes.connect();
-
+      sinon.stub(Events.prototype, 'assertAndBindQueues');
+      sinon.stub(Events.prototype, 'assertExchanges');
       done();
     });
 
     afterEach(function (done) {
       hermesAmqplib.connect.restore();
+      Events.prototype.assertAndBindQueues.restore();
+      Events.prototype.assertExchanges.restore();
       done();
     });
 
     it('should automatically queue subscribe invocations until connected to RabbitMQ server', function (done) {
+      Events.prototype.assertAndBindQueues.yields();
+      Events.prototype.assertExchanges.yields();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var subscribeCB = function (data, done) {};
@@ -111,6 +117,8 @@ describe('hermes', function () {
     });
 
     it('should automatically queue publish invocations until connected to RabbitMQ server', function (done) {
+      Events.prototype.assertAndBindQueues.yields();
+      Events.prototype.assertExchanges.yields();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
       var testData = {foo: 'bar'};
@@ -197,6 +205,8 @@ describe('hermes', function () {
     });
 
     it('should unsubscribe workers from rabbitmq (all workers in queue)', function (done) {
+      Events.prototype.assertAndBindQueues.yields();
+      Events.prototype.assertExchanges.yields();
       var callback = sinon.spy();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
@@ -221,6 +231,8 @@ describe('hermes', function () {
     });
 
     it('should unsubscribe workers from rabbitmq (specific workers in queue)', function (done) {
+      Events.prototype.assertAndBindQueues.yields();
+      Events.prototype.assertExchanges.yields();
       var callback = sinon.spy();
       expect(hermesAmqplib.connect.callCount).to.equal(1);
       // not yet connected...
