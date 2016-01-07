@@ -343,10 +343,13 @@ Hermes.prototype._populateChannel = function (cb) {
   var _this = this;
 
   async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
-    _this._channel.assertQueue(queueName, {
-      durable: true,
-      ttl: parseInt(process.env.HERMES_QUEUE_TTL)
-    }, forEachCb);
+    var opts = {
+      durable: true
+    };
+    if (process.env.HERMES_QUEUE_TTL) {
+      opts.ttl = process.env.HERMES_QUEUE_TTL;
+    }
+    _this._channel.assertQueue(queueName, opts, forEachCb);
   }, function done (err) {
     if (err) { return cb(err); }
 
