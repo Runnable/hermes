@@ -346,8 +346,8 @@ Hermes.prototype._populateChannel = function (cb) {
     var opts = {
       durable: true
     };
-    if (process.env.HERMES_QUEUE_TTL) {
-      opts.ttl = process.env.HERMES_QUEUE_TTL;
+    if (process.env.HERMES_QUEUE_EXPIRES) {
+      opts.expires = process.env.HERMES_QUEUE_EXPIRES;
     }
     _this._channel.assertQueue(queueName, opts, forEachCb);
   }, function done (err) {
