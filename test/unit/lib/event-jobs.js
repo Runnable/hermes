@@ -1,15 +1,18 @@
 'use strict';
 
-var Lab = require('lab');
-var lab = exports.lab = Lab.script();
-var describe = lab.describe;
-var it = lab.it;
-var beforeEach = lab.beforeEach;
 var Code = require('code');
-var expect = Code.expect;
+var Lab = require('lab');
 var sinon = require('sinon');
 
 var EventJobs = require('../../../lib/event-jobs');
+
+var lab = exports.lab = Lab.script();
+
+var afterEach = lab.afterEach;
+var beforeEach = lab.beforeEach;
+var describe = lab.describe;
+var expect = Code.expect;
+var it = lab.it;
 
 describe('event-jobs.js unit test', function () {
   describe('constructor', function () {
@@ -336,6 +339,37 @@ describe('event-jobs.js unit test', function () {
         done();
       });
     });
+
+    describe('HERMES_QUEUE_EXPIRES', function () {
+      beforeEach(function (done) {
+        process.env.HERMES_QUEUE_EXPIRES = '1'
+        done();
+      });
+      afterEach(function (done) {
+        delete process.env.HERMES_QUEUE_EXPIRES;
+        done();
+      });
+      it('should call assertQueue and bindQueue with expires', function (done) {
+        var testEvent = 'ev';
+        var queueName = 'blue.ev';
+        testEventJobs._channel.assertQueue.yieldsAsync();
+        testEventJobs._channel.bindQueue.yieldsAsync();
+
+        testEventJobs._assertAndBindQueue(testEvent, function (err) {
+          expect(err).to.not.exist();
+          expect(testEventJobs._channel.assertQueue
+            .withArgs(queueName, {
+              durable: true,
+              expires: '1'
+            })
+            .called).to.be.true();
+          expect(testEventJobs._channel.bindQueue
+            .withArgs(queueName, testEvent, '')
+            .called).to.be.true();
+          done();
+        });
+      });
+    })
 
     it('should cb err when assertQueue failed', function (done) {
       var testEvent = 'ev';
