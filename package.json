@@ -5,12 +5,12 @@
   "repository": "https://github.com/Runnable/hermes",
   "main": "index.js",
   "scripts": {
-    "lint": "jshint",
-    "test": "npm run lint; DEBUG=Hermes* NODE_PATH=./ lab -c -v",
-    "test-cov": "rm coverage/coverage.html; NODE_PATH=./ lab -c -r html > coverage/coverage.html; open -a 'Google Chrome' coverage/coverage.html"
+    "lint": "standard --verbose",
+    "test": "npm run lint && npm run testonly",
+    "testonly": "lab -c -v"
   },
   "author": "Casey Flynn <cflynn.us@gmail.com>",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "101": "^0.14.1",
     "amqplib": "^0.4.0",
@@ -22,9 +22,9 @@
   "devDependencies": {
     "callback-count": "^0.2.0",
     "code": "^1.4.0",
-    "jshint": "^2.6.3",
     "lab": "^6.2.0",
     "rewire": "^2.3.1",
-    "sinon": "^1.14.1"
+    "sinon": "^1.14.1",
+    "standard": "^5.4.1"
   }
 }
