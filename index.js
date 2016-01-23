@@ -37,7 +37,7 @@ function Hermes (opts, socketOpts) {
   defaults(socketOpts, {
     heartbeat: 0
   })
-  var _this = this
+  var self = this
   this._channel = null
   this._connection = null
   this._consumerTags = {}
@@ -54,46 +54,46 @@ function Hermes (opts, socketOpts) {
 
   this.on('ready', function () {
     debug('hermes ready')
-    var args = _this._publishQueue.pop()
+    var args = self._publishQueue.pop()
     while (args) {
-      publish.apply(_this, args)
-      args = _this._publishQueue.pop()
+      publish.apply(self, args)
+      args = self._publishQueue.pop()
     }
-    args = _this._subscribeQueue.pop()
+    args = self._subscribeQueue.pop()
     while (args) {
-      subscribe.apply(_this, args)
-      args = _this._subscribeQueue.pop()
+      subscribe.apply(self, args)
+      args = self._subscribeQueue.pop()
     }
   })
   this.on('publish', function (queueName, data) {
     debug('hermes publish event', queueName, data)
-    if (_this._channel) {
+    if (self._channel) {
       publish(queueName, data)
     } else {
-      _this._publishQueue.push(Array.prototype.slice.call(arguments))
+      self._publishQueue.push(Array.prototype.slice.call(arguments))
     }
   })
   this.on('subscribe', function (queueName, cb) {
     debug('hermes subscribe event', queueName)
-    if (_this._channel) {
+    if (self._channel) {
       subscribe(queueName, cb)
     } else {
-      _this._subscribeQueue.push(Array.prototype.slice.call(arguments))
+      self._subscribeQueue.push(Array.prototype.slice.call(arguments))
     }
   })
   this.on('unsubscribe', function (queueName, handler, cb) {
     debug('hermes unsubscribe event', queueName)
-    if (_this._channel) {
+    if (self._channel) {
       unsubscribe(queueName, handler, cb)
     } else {
-      _this._subscribeQueue.forEach(function (args) {
+      self._subscribeQueue.forEach(function (args) {
         /* args: [queueName, cb] */
         if (handler) {
           if (args[0] === queueName && args[1] === handler) {
-            _this._subscribeQueue.splice(_this._subscribeQueue.indexOf(args), 1)
+            self._subscribeQueue.splice(self._subscribeQueue.indexOf(args), 1)
           }
         } else if (args[0] === queueName) {
-          _this._subscribeQueue.splice(_this._subscribeQueue.indexOf(args), 1)
+          self._subscribeQueue.splice(self._subscribeQueue.indexOf(args), 1)
         }
       })
       cb()
@@ -107,12 +107,12 @@ function Hermes (opts, socketOpts) {
   function publish (queueName, data) {
     debug('channel.sendToQueue', queueName, data)
 
-    if (_this._eventJobs.isPublishEvent(queueName)) {
-      return _this._eventJobs.publish(queueName, data)
+    if (self._eventJobs.isPublishEvent(queueName)) {
+      return self._eventJobs.publish(queueName, data)
     }
 
-    _this._channel.sendToQueue(
-      queueName, data, { persistent: _this._opts.persistent })
+    self._channel.sendToQueue(
+      queueName, data, { persistent: self._opts.persistent })
   }
   /**
    * @param {String} queueName
@@ -126,13 +126,13 @@ function Hermes (opts, socketOpts) {
       queueName,
       cb.name
     ].join('-')
-    _this._consumerTags[consumerTag] = Array.prototype.slice.call(arguments)
+    self._consumerTags[consumerTag] = Array.prototype.slice.call(arguments)
 
-    if (_this._eventJobs.isSubscribeEvent(queueName)) {
-      return _this._eventJobs.subscribe(queueName, _this._subscribeCallback(cb))
+    if (self._eventJobs.isSubscribeEvent(queueName)) {
+      return self._eventJobs.subscribe(queueName, self._subscribeCallback(cb))
     }
 
-    _this._channel.consume(queueName, _this._subscribeCallback(cb), {
+    self._channel.consume(queueName, self._subscribeCallback(cb), {
       consumerTag: consumerTag
     })
   }
@@ -146,8 +146,8 @@ function Hermes (opts, socketOpts) {
     debug('channel.cancel', queueName)
     var cancelTags = []
     var tagVal
-    Object.keys(_this._consumerTags).forEach(function (consumerTag) {
-      tagVal = _this._consumerTags[consumerTag]
+    Object.keys(self._consumerTags).forEach(function (consumerTag) {
+      tagVal = self._consumerTags[consumerTag]
       if (handler) {
         if (tagVal[0] === queueName && tagVal[1] === handler) {
           cancelTags.push(consumerTag)
@@ -156,12 +156,12 @@ function Hermes (opts, socketOpts) {
         cancelTags.push(consumerTag)
       }
     })
-    async.eachSeries(cancelTags, _this._channel.cancel.bind(_this._channel), function () {
+    async.eachSeries(cancelTags, self._channel.cancel.bind(self._channel), function () {
       cancelTags.forEach(function (cancelTag) {
-        delete _this._consumerTags[cancelTag]
+        delete self._consumerTags[cancelTag]
       })
       if (isFunction(cb)) {
-        cb.apply(_this, arguments)
+        cb.apply(self, arguments)
       }
     })
   }
@@ -265,7 +265,7 @@ Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
  */
 Hermes.prototype.connect = function (cb) {
   cb = cb || noop
-  var _this = this
+  var self = this
   var connectionUrl = [
     'amqp://', this._opts.username, ':', this._opts.password,
     '@', this._opts.hostname]
@@ -286,15 +286,15 @@ Hermes.prototype.connect = function (cb) {
   amqplib.connect(connectionUrl, this._socketOpts, function (err, conn) {
     if (err) { return cb(err) }
     debug('rabbitmq connected')
-    _this._connection = conn
+    self._connection = conn
     // we need listen to the `error` otherwise it would be thrown
-    _this._connection.on('error', function (err) {
+    self._connection.on('error', function (err) {
       err = err || new Error('Connection error')
       err.reason = 'connection error'
-      _this.emit('error', err)
+      self.emit('error', err)
     })
 
-    _this._createChannel(cb)
+    self._createChannel(cb)
   })
   return this
 }
@@ -305,29 +305,29 @@ Hermes.prototype.connect = function (cb) {
  * @param  {Function} cb (err)
  */
 Hermes.prototype._createChannel = function (cb) {
-  var _this = this
+  var self = this
 
-  _this._connection.createChannel(function (err, ch) {
+  self._connection.createChannel(function (err, ch) {
     if (err) { return cb(err) }
     debug('rabbitmq channel created')
     /**
      * Durable queue: https://www.rabbitmq.com/tutorials/tutorial-two-python.html
      * (Message Durability)
      */
-    _this._channel = ch
-    if (_this._opts.prefetch) {
-      _this._channel.prefetch(_this._opts.prefetch)
+    self._channel = ch
+    if (self._opts.prefetch) {
+      self._channel.prefetch(self._opts.prefetch)
     }
 
-    _this._eventJobs.setChannel(ch)
+    self._eventJobs.setChannel(ch)
     // we need listen to the `error` otherwise it would be thrown
-    _this._channel.on('error', function (err) {
+    self._channel.on('error', function (err) {
       err = err || new Error('Channel error')
       err.reason = 'channel error'
-      _this.emit('error', err)
+      self.emit('error', err)
     })
 
-    _this._populateChannel(cb)
+    self._populateChannel(cb)
   })
 }
 
@@ -336,25 +336,25 @@ Hermes.prototype._createChannel = function (cb) {
  * @param  {Function} cb (err)
  */
 Hermes.prototype._populateChannel = function (cb) {
-  var _this = this
+  var self = this
 
-  async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
+  async.forEach(self._opts.queues, function forEachQueue (queueName, forEachCb) {
     var opts = {
       durable: true
     }
     if (process.env.HERMES_QUEUE_EXPIRES) {
       opts.expires = process.env.HERMES_QUEUE_EXPIRES
     }
-    _this._channel.assertQueue(queueName, opts, forEachCb)
+    self._channel.assertQueue(queueName, opts, forEachCb)
   }, function done (err) {
     if (err) { return cb(err) }
 
-    _this._eventJobs.assertExchanges(function (err) {
+    self._eventJobs.assertExchanges(function (err) {
       if (err) { return cb(err) }
 
-      _this._eventJobs.assertAndBindQueues(function (err) {
+      self._eventJobs.assertAndBindQueues(function (err) {
         if (err) { return cb(err) }
-        _this.emit('ready')
+        self.emit('ready')
         cb()
       })
     })
@@ -368,31 +368,31 @@ Hermes.prototype._populateChannel = function (cb) {
  */
 Hermes.prototype.close = function (cb) {
   debug('hermes close')
-  var _this = this
+  var self = this
   async.series([
     function (stepCb) {
-      if (!_this._channel) {
+      if (!self._channel) {
         debug('hermes close !channel')
         return stepCb()
       }
-      _this._channel.close(function (err) {
+      self._channel.close(function (err) {
         debug('hermes channel close', arguments)
         if (!err) {
-          delete _this._channel
+          delete self._channel
         }
         stepCb.apply(this, arguments)
       })
     },
     function (stepCb) {
-      if (!_this._connection) {
+      if (!self._connection) {
         debug('hermes connection !connection')
         return stepCb()
       }
-      _this._connection.close(function (err) {
+      self._connection.close(function (err) {
         debug('hermes connection close', arguments)
         if (!err) {
-          delete _this._channel
-          delete _this._connection
+          delete self._channel
+          delete self._connection
         }
         stepCb.apply(this, arguments)
       })
@@ -407,7 +407,7 @@ Hermes.prototype.close = function (cb) {
  * @return Function
  */
 Hermes.prototype._subscribeCallback = function (cb) {
-  var _this = this
+  var self = this
   debug('_subscribeCallback')
   return function (msg) {
     if (!msg) {
@@ -415,12 +415,12 @@ Hermes.prototype._subscribeCallback = function (cb) {
       return
     }
     cb(JSON.parse(msg.content.toString()), function done () {
-      if (_this._channel) {
+      if (self._channel) {
         debug('_subscribeCallback done')
-        _this._channel.ack(msg)
+        self._channel.ack(msg)
       } else {
         debug('_subscribeCallback cannot ack. channel does not exist')
-        _this.emit('error', new Error('Cannot ack. Channel does not exist'))
+        self.emit('error', new Error('Cannot ack. Channel does not exist'))
       }
     })
   }
