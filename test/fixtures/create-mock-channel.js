@@ -1,32 +1,31 @@
 /**
  * @module test/fixtures/mock-channel
  */
-'use strict';
+'use strict'
 
-var EventEmitter = require('events').EventEmitter;
-var inherits = require('util').inherits;
-var sinon = require('sinon');
+var EventEmitter = require('events').EventEmitter
+var inherits = require('util').inherits
+var sinon = require('sinon')
 
-module.exports = createMockChannel;
+module.exports = createMockChannel
 
 function MockChannel () {
-  EventEmitter.call(this);
+  EventEmitter.call(this)
 }
-inherits(MockChannel, EventEmitter);
-
+inherits(MockChannel, EventEmitter)
 
 /**
  * create a mock channel
  * @return {mockChannel}
  */
 function createMockChannel () {
-  var mockChannel = new MockChannel();
-  mockChannel.ack = sinon.stub();
-  mockChannel.assertQueue = sinon.stub();
-  mockChannel.consume = sinon.stub();
-  mockChannel.sendToQueue = sinon.stub();
-  mockChannel.cancel = sinon.stub();
-  mockChannel.close = sinon.stub();
+  var mockChannel = new MockChannel()
+  mockChannel.ack = sinon.stub()
+  mockChannel.assertQueue = sinon.stub()
+  mockChannel.consume = sinon.stub()
+  mockChannel.sendToQueue = sinon.stub()
+  mockChannel.cancel = sinon.stub()
+  mockChannel.close = sinon.stub()
 
-  return mockChannel;
+  return mockChannel
 }
