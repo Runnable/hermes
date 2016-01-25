@@ -12,6 +12,7 @@ var async = require('async');
 var debug = require('debug')('hermes:index');
 var defaults = require('101/defaults');
 var isFunction = require('101/is-function');
+var isString = require('101/is-string');
 var noop = require('101/noop');
 var querystring = require('querystring');
 var util = require('util');
@@ -336,35 +337,37 @@ Hermes.prototype._createChannel = function (cb) {
 };
 
 /**
+ * Assert queue with provided name and potentially options
+ * @param {String|Object} either queueName or queueDef object with `name` and `opts`
+ * @param {Function} cb (err)
+ */
+Hermes.prototype._assertQueue = function (queueNameOrDef, cb) {
+  var opts = {
+    durable: true
+  }
+  var queueName
+  if (isString(queueNameOrDef)) {
+    if (process.env.HERMES_QUEUE_EXPIRES) {
+      opts.expires = process.env.HERMES_QUEUE_EXPIRES;
+    }
+    queueName = queueNameOrDef
+  } else {
+    var queueDef = queueNameOrDef
+    queueName = queueDef.name
+    opts = defaults(queueDef.opts, opts)
+  }
+  this._channel.assertQueue(queueName, opts, cb)
+}
+
+
+/**
  * responsible for populating the channel with queues and exchanges
  * @param  {Function} cb (err)
  */
 Hermes.prototype._populateChannel = function (cb) {
   var _this = this;
 
-  async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
-    var queueDef = {}
-    var opts = {
-      durable: true
-    }
-    if (isFunction(forEachCb)) {
-      if (process.env.HERMES_QUEUE_EXPIRES) {
-        opts.expires = process.env.HERMES_QUEUE_EXPIRES;
-      }
-      queueDef.fn = forEachCb
-      queueDef.opts = opts
-    } else {
-      queueDef = forEachCb
-      if(!queueDef.opts) {
-        queueDef.opts = opts
-      } else {
-        queueDef.opts = defaults(queueDef.opts, opts)
-      }
-    }
-
-
-    _this._channel.assertQueue(queueName, queueDef.opts, queueDef.fn);
-  }, function done (err) {
+  async.forEach(_this._opts.queues, this._assertQueue.bind(this), function done (err) {
     if (err) { return cb(err); }
 
     _this._eventJobs.assertExchanges(function (err) {

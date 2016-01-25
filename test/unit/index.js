@@ -79,6 +79,70 @@ describe('index.js unit test', function () {
     });
   }); // end _createChannel
 
+  describe('_assertQueue', function () {
+    var testHermes;
+    beforeEach(function (done) {
+      testHermes = Hermes.hermesSingletonFactory(connectionOpts.standard)
+      testHermes._channel = {
+        assertQueue: function () {}
+      }
+      sinon.stub(testHermes._channel, 'assertQueue').yieldsAsync()
+      done()
+    })
+
+    it('should work when queueName was passed', function (done) {
+      testHermes._assertQueue('my-queue', function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(testHermes._channel.assertQueue)
+        sinon.assert.calledWith(
+          testHermes._channel.assertQueue,
+          'my-queue',
+          { durable: true },
+          sinon.match.func)
+        done()
+      })
+    })
+
+    it('should work when queueDef was passed', function (done) {
+      var queDef = {
+        name: 'expiring-queue',
+        opts: {
+          expires: 10
+        }
+      }
+      testHermes._assertQueue(queDef, function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(testHermes._channel.assertQueue)
+        sinon.assert.calledWith(
+          testHermes._channel.assertQueue,
+          'expiring-queue',
+          { durable: true, expires: 10 },
+          sinon.match.func)
+        done()
+      })
+    })
+
+    it('should be able to override durable param', function (done) {
+      var queDef = {
+        name: 'expiring-queue',
+        opts: {
+          expires: 10,
+          durable: false
+        }
+      }
+      testHermes._assertQueue(queDef, function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(testHermes._channel.assertQueue)
+        sinon.assert.calledWith(
+          testHermes._channel.assertQueue,
+          'expiring-queue',
+          { durable: false, expires: 10 },
+          sinon.match.func)
+        done()
+      })
+    })
+  })
+
   describe('_populateChannel', function () {
     var testHermes;
     beforeEach(function (done) {
