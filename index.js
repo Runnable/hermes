@@ -343,13 +343,27 @@ Hermes.prototype._populateChannel = function (cb) {
   var _this = this;
 
   async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
+    var queueDef = {}
     var opts = {
       durable: true
-    };
-    if (process.env.HERMES_QUEUE_EXPIRES) {
-      opts.expires = process.env.HERMES_QUEUE_EXPIRES;
     }
-    _this._channel.assertQueue(queueName, opts, forEachCb);
+    if (isFunction(forEachCb)) {
+      if (process.env.HERMES_QUEUE_EXPIRES) {
+        opts.expires = process.env.HERMES_QUEUE_EXPIRES;
+      }
+      queueDef.fn = forEachCb
+      queueDef.opts = opts
+    } else {
+      queueDef = forEachCb
+      if(!queueDef.opts) {
+        queueDef.opts = opts
+      } else {
+        queueDef.opts = defaults(queueDef.opts, opts)
+      }
+    }
+
+
+    _this._channel.assertQueue(queueName, queueDef.opts, queueDef.fn);
   }, function done (err) {
     if (err) { return cb(err); }
 
