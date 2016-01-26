@@ -390,6 +390,7 @@ Hermes._normalizeQueues = function (queues) {
  * @param {Function} cb (err)
  */
 Hermes.prototype._assertQueue = function (queueDef, cb) {
+  debug('assert queue', queueDef.name, queueDef.opts)
   this._channel.assertQueue(queueDef.name, queueDef.opts, cb)
 }
 
