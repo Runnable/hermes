@@ -12,6 +12,7 @@ var async = require('async');
 var debug = require('debug')('hermes:index');
 var defaults = require('101/defaults');
 var isFunction = require('101/is-function');
+var isString = require('101/is-string');
 var noop = require('101/noop');
 var querystring = require('querystring');
 var util = require('util');
@@ -42,6 +43,9 @@ function Hermes (opts, socketOpts) {
   this._connection = null;
   this._consumerTags = {};
   this._opts = opts;
+  this._opts.queues = Hermes._normalizeQueues(this._opts.queues)
+  this._opts.publishedEvents = Hermes._normalizeQueues(this._opts.publishedEvents)
+  this._opts.subscribedEvents = Hermes._normalizeQueues(this._opts.subscribedEvents)
   this._publishQueue = [];
   this._socketOpts = socketOpts;
   this._subscribeQueue = [];
@@ -190,13 +194,14 @@ Hermes.hermesSingletonFactory = function (opts, socketOpts) {
 module.exports = Hermes;
 
 /**
- * Returns all the queues with which Hermes was created.
+ * Returns all the queue names with which Hermes was created.
  * @return {Array<String>} Queue names
  */
 Hermes.prototype.getQueues = function () {
-  return this._opts.queues.slice().concat(
+  var queues = this._opts.queues.slice().concat(
     this._opts.publishedEvents.slice(),
-    this._opts.subscribedEvents.slice());
+    this._opts.subscribedEvents.slice())
+  return queues.map(Hermes._getQueueName);
 };
 
 /**
@@ -208,7 +213,7 @@ Hermes.prototype.getQueues = function () {
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isPublishEvent(queueName)) {
+  if (!assertOpts.doesQueueExist(this._opts.queues, queueName) && !this._eventJobs.isPublishEvent(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -233,8 +238,8 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, handler) {
   debug('hermes subscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
-    throw new Error('attempting to subscribe to invalid queue: '+queueName);
+  if (!assertOpts.doesQueueExist(this._opts.queues, queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
+    throw new Error('attempting to subscribe to invalid queue: ' + queueName);
   }
   if (handler.length < 2) {
     throw new Error('queue listener callback must take a "done" callback function as a second'+
@@ -255,8 +260,8 @@ Hermes.prototype.subscribe = function (queueName, handler) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
-    throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
+  if (!assertOpts.doesQueueExist(this._opts.queues, queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
+    throw new Error('attempting to unsubscribe from invalid queue: ' + queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
   return this;
@@ -295,6 +300,7 @@ Hermes.prototype.connect = function (cb) {
     _this._connection.on('error', function (err) {
       err = err || new Error('Connection error');
       err.reason = 'connection error';
+      debug('connection error', err)
       _this.emit('error', err);
     });
 
@@ -328,6 +334,7 @@ Hermes.prototype._createChannel = function (cb) {
     _this._channel.on('error', function (err) {
       err = err || new Error('Channel error');
       err.reason = 'channel error';
+      debug('channel error', err)
       _this.emit('error', err);
     });
 
@@ -336,21 +343,74 @@ Hermes.prototype._createChannel = function (cb) {
 };
 
 /**
+ * Normalizes input queue data. Input can be either string or queueDef object with `name` and/or `opts`
+ * @param {String|Object} nameOrDef queueName or object with `name` and `opts`
+ * @return {Object} normalized queueDef object with `name` and default `opts` (`durable==true` and potentially `expires`)
+ */
+Hermes._normalizeQueue = function (nameOrDef) {
+  var opts = {
+    durable: true
+  }
+  var queueDef
+  if (isString(nameOrDef)) {
+    if (process.env.HERMES_QUEUE_EXPIRES) {
+      opts.expires = process.env.HERMES_QUEUE_EXPIRES;
+    }
+    queueDef = {
+      name: nameOrDef,
+      opts: opts
+    }
+  } else {
+    queueDef = nameOrDef
+    queueDef.opts = defaults(queueDef.opts, opts)
+    if (!queueDef.opts.expires) {
+      if (process.env.HERMES_QUEUE_EXPIRES) {
+        queueDef.opts.expires = process.env.HERMES_QUEUE_EXPIRES;
+      }
+    }
+  }
+  return queueDef
+}
+
+Hermes._getQueueName = function (nameOrDef) {
+  return isString(nameOrDef) ? nameOrDef : nameOrDef.name
+}
+
+/**
+ * Normalizes all queues
+ * @param {Array} array of mixed queueNames or queueDefs
+ * @return {Array} array of normalized queues definitions
+ */
+Hermes._normalizeQueues = function (queues) {
+  return queues.map(Hermes._normalizeQueue)
+}
+
+
+/**
+ * Assert queue with provided name and potentially options
+ * @param {Object} queueDef object with `name` and `opts`
+ * @param {Function} cb (err)
+ */
+Hermes.prototype._assertQueue = function (queueDef, cb) {
+  debug('assert queue', queueDef.name, queueDef.opts)
+  this._channel.assertQueue(queueDef.name, queueDef.opts, function (err) {
+    if (err) {
+      debug('assert queue error', queueDef.name, queueDef.opts, err)
+      return cb(err);
+    }
+    debug('assert queue success', queueDef.name, queueDef.opts)
+    cb()
+  })
+}
+
+/**
  * responsible for populating the channel with queues and exchanges
  * @param  {Function} cb (err)
  */
 Hermes.prototype._populateChannel = function (cb) {
   var _this = this;
 
-  async.forEach(_this._opts.queues, function forEachQueue (queueName, forEachCb) {
-    var opts = {
-      durable: true
-    };
-    if (process.env.HERMES_QUEUE_EXPIRES) {
-      opts.expires = process.env.HERMES_QUEUE_EXPIRES;
-    }
-    _this._channel.assertQueue(queueName, opts, forEachCb);
-  }, function done (err) {
+  async.forEach(_this._opts.queues, this._assertQueue.bind(this), function done (err) {
     if (err) { return cb(err); }
 
     _this._eventJobs.assertExchanges(function (err) {

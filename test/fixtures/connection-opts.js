@@ -9,7 +9,7 @@ module.exports = {
     port: '1111',
     username: 'tom',
     password: 'harry',
-    queues: ['a', 'b']
+    queues: [{ name: 'a' }, { name: 'b' }]
   },
   noSpecPort: {
     name: 'nemo',
@@ -17,6 +17,6 @@ module.exports = {
     port: null,
     username: 'tom',
     password: 'harry',
-    queues: ['a', 'b']
+    queues: [{ name: 'a' }, { name: 'b' }]
   }
 };

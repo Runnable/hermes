@@ -79,6 +79,57 @@ describe('index.js unit test', function () {
     });
   }); // end _createChannel
 
+  describe('_assertQueue', function () {
+    var testHermes;
+    beforeEach(function (done) {
+      testHermes = Hermes.hermesSingletonFactory(connectionOpts.standard)
+      testHermes._channel = {
+        assertQueue: function () {}
+      }
+      sinon.stub(testHermes._channel, 'assertQueue').yieldsAsync()
+      done()
+    })
+
+    it('should work when queueDef was passed', function (done) {
+      var queDef = {
+        name: 'expiring-queue',
+        opts: {
+          expires: 10
+        }
+      }
+      testHermes._assertQueue(queDef, function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(testHermes._channel.assertQueue)
+        sinon.assert.calledWith(
+          testHermes._channel.assertQueue,
+          'expiring-queue',
+          { expires: 10 },
+          sinon.match.func)
+        done()
+      })
+    })
+
+    it('should be able to override durable param', function (done) {
+      var queDef = {
+        name: 'expiring-queue',
+        opts: {
+          expires: 10,
+          durable: false
+        }
+      }
+      testHermes._assertQueue(queDef, function (err) {
+        expect(err).to.not.exist()
+        sinon.assert.calledOnce(testHermes._channel.assertQueue)
+        sinon.assert.calledWith(
+          testHermes._channel.assertQueue,
+          'expiring-queue',
+          { durable: false, expires: 10 },
+          sinon.match.func)
+        done()
+      })
+    })
+  })
+
   describe('_populateChannel', function () {
     var testHermes;
     beforeEach(function (done) {
@@ -152,4 +203,83 @@ describe('index.js unit test', function () {
       });
     });
   }); // end _populateChannel
+  describe('_normalizeQueue', function () {
+    it('should return queueDef if name is provided', function (done) {
+      var def = Hermes._normalizeQueue('some.queue')
+      expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true }})
+      done()
+    })
+    it('should return queueDef if queueDef is provided', function (done) {
+      var def = Hermes._normalizeQueue({ name: 'some.queue' })
+      expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true }})
+      done()
+    })
+    it('should apply additional options', function (done) {
+      var def = Hermes._normalizeQueue({ name: 'some.queue', opts: { expires: 2 }})
+      expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true, expires: 2 }})
+      done()
+    })
+    it('should be able to override default options', function (done) {
+      var def = Hermes._normalizeQueue({ name: 'some.queue', opts: { expires: 2, durable: false }})
+      expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: false, expires: 2 }})
+      done()
+    })
+    describe('use process.env.HERMES_QUEUE_EXPIRES', function () {
+      beforeEach(function (done) {
+        process.env.HERMES_QUEUE_EXPIRES = 3
+        done()
+      })
+      afterEach(function (done) {
+        delete process.env.HERMES_QUEUE_EXPIRES
+        done()
+      })
+      it('should return queueDef if name is provided and use default expires', function (done) {
+        var def = Hermes._normalizeQueue('some.queue')
+        expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true, expires: 3 }})
+        done()
+      })
+      it('should return queueDef if queueDef is provided and use default expire', function (done) {
+        var def = Hermes._normalizeQueue({ name: 'some.queue' })
+        expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true, expires: 3 }})
+        done()
+      })
+      it('should not override per queue expires with default one', function (done) {
+        var def = Hermes._normalizeQueue({ name: 'some.queue', opts: { expires: 20 }})
+        expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true, expires: 20 }})
+        done()
+      })
+    })
+  })
+
+  describe('_normalizeQueues', function () {
+    it('should work with array of strings', function (done) {
+      var defs = Hermes._normalizeQueues(['a', 'b', 'c'])
+      expect(defs).to.deep.equal([
+        { name: 'a', opts: { durable: true } },
+        { name: 'b', opts: { durable: true } },
+        { name: 'c', opts: { durable: true } }
+      ])
+      done()
+    })
+
+    it('should work with array of objects', function (done) {
+      var defs = Hermes._normalizeQueues([{ name: 'a' }, { name: 'b' }, { name: 'c' }])
+      expect(defs).to.deep.equal([
+        { name: 'a', opts: { durable: true } },
+        { name: 'b', opts: { durable: true } },
+        { name: 'c', opts: { durable: true } }
+      ])
+      done()
+    })
+
+    it('should work with array of mixed defs', function (done) {
+      var defs = Hermes._normalizeQueues(['a', { name: 'b' }, { name: 'c' }])
+      expect(defs).to.deep.equal([
+        { name: 'a', opts: { durable: true } },
+        { name: 'b', opts: { durable: true } },
+        { name: 'c', opts: { durable: true } }
+      ])
+      done()
+    })
+  })
 });

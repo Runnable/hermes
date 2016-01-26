@@ -85,7 +85,7 @@ describe('hermes', function () {
         };
       });
 
-      var opts = { queues: [TEST_QUEUE], prefetch: 10 };
+      var opts = { queues: [{name: TEST_QUEUE}], prefetch: 10 };
       defaults(opts, connectionOpts.standard);
       hermes = new HermesClass(opts);
       hermes.connect();
@@ -303,7 +303,7 @@ describe('hermes', function () {
         // (a) should be a copy
         expect(queues).to.not.equal(hermes._opts.queues);
         // (b) should contain only the queues we specified
-        expect(queues).to.only.contain(connectionOpts.standard.queues);
+        expect(queues).to.only.contain(connectionOpts.standard.queues.map(Hermes._getQueueName));
         done();
       });
     });
