@@ -90,19 +90,6 @@ describe('index.js unit test', function () {
       done()
     })
 
-    it('should work when queueName was passed', function (done) {
-      testHermes._assertQueue('my-queue', function (err) {
-        expect(err).to.not.exist()
-        sinon.assert.calledOnce(testHermes._channel.assertQueue)
-        sinon.assert.calledWith(
-          testHermes._channel.assertQueue,
-          'my-queue',
-          { durable: true },
-          sinon.match.func)
-        done()
-      })
-    })
-
     it('should work when queueDef was passed', function (done) {
       var queDef = {
         name: 'expiring-queue',
@@ -116,7 +103,7 @@ describe('index.js unit test', function () {
         sinon.assert.calledWith(
           testHermes._channel.assertQueue,
           'expiring-queue',
-          { durable: true, expires: 10 },
+          { expires: 10 },
           sinon.match.func)
         done()
       })

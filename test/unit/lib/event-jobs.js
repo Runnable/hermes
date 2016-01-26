@@ -85,7 +85,7 @@ describe('event-jobs.js unit test', function () {
       var testEventJobs = new EventJobs({
         channel: 'test',
         name: 'gober',
-        publishedEvents: ['a', 'b', 'c']
+        publishedEvents: [{name: 'a'}, {name: 'b'}, {name: 'c'}]
       });
       expect(!!testEventJobs.isPublishEvent('test'))
         .to.be.false();
@@ -96,7 +96,7 @@ describe('event-jobs.js unit test', function () {
       var testEventJobs = new EventJobs({
         channel: 'test',
         name: 'gober',
-        publishedEvents: ['a', 'b', 'c']
+        publishedEvents: [{name: 'a'}, {name: 'b'}, {name: 'c'}]
       });
       expect(!!testEventJobs.isPublishEvent('b'))
         .to.be.true();
@@ -132,7 +132,7 @@ describe('event-jobs.js unit test', function () {
     });
 
     it('should call create for each item', function (done) {
-      testEventJobs._publishedEvents = ['a', 'b', 'c'];
+      testEventJobs._publishedEvents = [{name: 'a'}, {name: 'b'}, {name: 'c'}]
       testEventJobs._assertExchange.yieldsAsync();
       testEventJobs.assertExchanges(function () {
         expect(testEventJobs._assertExchange.calledThrice).to.be.true();
@@ -156,9 +156,15 @@ describe('event-jobs.js unit test', function () {
 
     it('should call assertExchange', function (done) {
       var testName = 'name';
+      var qDef = {
+        name: testName,
+        opts: {
+          durable: true
+        }
+      }
       testEventJobs._channel.assertExchange.yieldsAsync();
 
-      testEventJobs._assertExchange(testName, function () {
+      testEventJobs._assertExchange(qDef, function () {
         expect(testEventJobs._channel.assertExchange
           .withArgs(testName, 'fanout',  { durable: true })
           .called).to.be.true();
@@ -231,7 +237,7 @@ describe('event-jobs.js unit test', function () {
     it('should be false if not in array (full)', function (done) {
       var testEventJobs = new EventJobs({
         name: 'gober',
-        subscribedEvents: ['a', 'b', 'c']
+        subscribedEvents: [{name: 'a'}, {name: 'b'}, {name: 'c'}]
       });
       expect(!!testEventJobs.isSubscribeEvent('test'))
         .to.be.false();
@@ -241,7 +247,7 @@ describe('event-jobs.js unit test', function () {
     it('should be true if in array', function (done) {
       var testEventJobs = new EventJobs({
         name: 'gober',
-        subscribedEvents: ['a', 'b', 'c']
+        subscribedEvents: [{name: 'a'}, {name: 'b'}, {name: 'c'}]
       });
       expect(!!testEventJobs.isSubscribeEvent('b'))
         .to.be.true();
@@ -279,7 +285,7 @@ describe('event-jobs.js unit test', function () {
     });
 
     it('should call create for each item', function (done) {
-      testEventJobs._subscribedEvents = ['a', 'b', 'c'];
+      testEventJobs._subscribedEvents = [{name: 'a'}, {name: 'b'}, {name: 'c'}]
       testEventJobs._assertAndBindQueue.yieldsAsync();
       testEventJobs.assertAndBindQueues(function () {
         expect(testEventJobs._assertAndBindQueue.calledThrice).to.be.true();
@@ -305,10 +311,16 @@ describe('event-jobs.js unit test', function () {
     it('should call assertQueue and bindQueue', function (done) {
       var testEvent = 'ev';
       var queueName = 'blue.ev';
+      var qDef = {
+        name: testEvent,
+        opts: {
+          durable: true
+        }
+      }
       testEventJobs._channel.assertQueue.yieldsAsync();
       testEventJobs._channel.bindQueue.yieldsAsync();
 
-      testEventJobs._assertAndBindQueue(testEvent, function (err) {
+      testEventJobs._assertAndBindQueue(qDef, function (err) {
         expect(err).to.not.exist();
         expect(testEventJobs._channel.assertQueue
           .withArgs(queueName, { durable: true })
@@ -324,14 +336,21 @@ describe('event-jobs.js unit test', function () {
       var testName = 'myName';
       var testEvent = 'ev';
       var queueName = 'myName.ev';
+      var qDef = {
+        name: testEvent,
+        opts: {
+          durable: true,
+          expires: 1
+        }
+      }
       testEventJobs._name = testName;
       testEventJobs._channel.assertQueue.yieldsAsync();
       testEventJobs._channel.bindQueue.yieldsAsync();
 
-      testEventJobs._assertAndBindQueue(testEvent, function (err) {
+      testEventJobs._assertAndBindQueue(qDef, function (err) {
         expect(err).to.not.exist();
         expect(testEventJobs._channel.assertQueue
-          .withArgs(queueName, { durable: true })
+          .withArgs(queueName, { durable: true, expires: 1 })
           .called).to.be.true();
         expect(testEventJobs._channel.bindQueue
           .withArgs(queueName, testEvent, '')
@@ -340,43 +359,18 @@ describe('event-jobs.js unit test', function () {
       });
     });
 
-    describe('HERMES_QUEUE_EXPIRES', function () {
-      beforeEach(function (done) {
-        process.env.HERMES_QUEUE_EXPIRES = '1'
-        done();
-      });
-      afterEach(function (done) {
-        delete process.env.HERMES_QUEUE_EXPIRES;
-        done();
-      });
-      it('should call assertQueue and bindQueue with expires', function (done) {
-        var testEvent = 'ev';
-        var queueName = 'blue.ev';
-        testEventJobs._channel.assertQueue.yieldsAsync();
-        testEventJobs._channel.bindQueue.yieldsAsync();
-
-        testEventJobs._assertAndBindQueue(testEvent, function (err) {
-          expect(err).to.not.exist();
-          expect(testEventJobs._channel.assertQueue
-            .withArgs(queueName, {
-              durable: true,
-              expires: '1'
-            })
-            .called).to.be.true();
-          expect(testEventJobs._channel.bindQueue
-            .withArgs(queueName, testEvent, '')
-            .called).to.be.true();
-          done();
-        });
-      });
-    })
-
     it('should cb err when assertQueue failed', function (done) {
       var testEvent = 'ev';
       var queueName = 'blue.ev';
+      var qDef = {
+        name: testEvent,
+        opts: {
+          durable: true
+        }
+      }
       testEventJobs._channel.assertQueue.yieldsAsync('err');
 
-      testEventJobs._assertAndBindQueue(testEvent, function (err) {
+      testEventJobs._assertAndBindQueue(qDef, function (err) {
         expect(err).to.exist();
         expect(testEventJobs._channel.assertQueue
           .withArgs(queueName, { durable: true })

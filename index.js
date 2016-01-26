@@ -43,6 +43,9 @@ function Hermes (opts, socketOpts) {
   this._connection = null;
   this._consumerTags = {};
   this._opts = opts;
+  this._opts.queues = Hermes._normalizeQueues(this._opts.queues)
+  this._opts.publishedEvents = Hermes._normalizeQueues(this._opts.publishedEvents)
+  this._opts.subscribedEvents = Hermes._normalizeQueues(this._opts.subscribedEvents)
   this._publishQueue = [];
   this._socketOpts = socketOpts;
   this._subscribeQueue = [];
@@ -209,7 +212,7 @@ Hermes.prototype.getQueues = function () {
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isPublishEvent(queueName)) {
+  if (!Hermes._doesQueueExists(this._opts.queues, queueName) && !this._eventJobs.isPublishEvent(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -234,8 +237,8 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, handler) {
   debug('hermes subscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
-    throw new Error('attempting to subscribe to invalid queue: '+queueName);
+  if (!Hermes._doesQueueExists(this._opts.queues, queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
+    throw new Error('attempting to subscribe to invalid queue: ' + queueName);
   }
   if (handler.length < 2) {
     throw new Error('queue listener callback must take a "done" callback function as a second'+
@@ -256,8 +259,8 @@ Hermes.prototype.subscribe = function (queueName, handler) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!~this._opts.queues.indexOf(queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
-    throw new Error('attempting to unsubscribe from invalid queue: '+queueName);
+  if (!Hermes._doesQueueExists(this._opts.queues, queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
+    throw new Error('attempting to unsubscribe from invalid queue: ' + queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
   return this;
@@ -336,27 +339,44 @@ Hermes.prototype._createChannel = function (cb) {
   });
 };
 
-/**
- * Assert queue with provided name and potentially options
- * @param {String|Object} either queueName or queueDef object with `name` and `opts`
- * @param {Function} cb (err)
- */
-Hermes.prototype._assertQueue = function (queueNameOrDef, cb) {
+Hermes._normalizeQueue = function (nameOrDef) {
   var opts = {
     durable: true
   }
-  var queueName
-  if (isString(queueNameOrDef)) {
+  var queueDef
+  if (isString(nameOrDef)) {
     if (process.env.HERMES_QUEUE_EXPIRES) {
       opts.expires = process.env.HERMES_QUEUE_EXPIRES;
     }
-    queueName = queueNameOrDef
+    queueDef = {
+      name: nameOrDef,
+      opts: opts
+    }
   } else {
-    var queueDef = queueNameOrDef
-    queueName = queueDef.name
-    opts = defaults(queueDef.opts, opts)
+    queueDef = nameOrDef
+    queueDef.opts = defaults(queueDef.opts, opts)
   }
-  this._channel.assertQueue(queueName, opts, cb)
+  return queueDef
+}
+
+Hermes._normalizeQueues = function (queues) {
+  return queues.map(Hermes._normalizeQueue)
+}
+
+Hermes._doesQueueExists = function (queues, name) {
+  var result = queues.filter(function (queue) {
+    return queue.name === name
+  })
+  return result.length > 0
+}
+
+/**
+ * Assert queue with provided name and potentially options
+ * @param {Object} queueDef object with `name` and `opts`
+ * @param {Function} cb (err)
+ */
+Hermes.prototype._assertQueue = function (queueDef, cb) {
+  this._channel.assertQueue(queueDef.name, queueDef.opts, cb)
 }
 
 

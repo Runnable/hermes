@@ -85,7 +85,7 @@ describe('hermes', function () {
         };
       });
 
-      var opts = { queues: [TEST_QUEUE], prefetch: 10 };
+      var opts = { queues: [{name: TEST_QUEUE}], prefetch: 10 };
       defaults(opts, connectionOpts.standard);
       hermes = new HermesClass(opts);
       hermes.connect();
