@@ -194,13 +194,14 @@ Hermes.hermesSingletonFactory = function (opts, socketOpts) {
 module.exports = Hermes;
 
 /**
- * Returns all the queues with which Hermes was created.
+ * Returns all the queue names with which Hermes was created.
  * @return {Array<String>} Queue names
  */
 Hermes.prototype.getQueues = function () {
-  return this._opts.queues.slice().concat(
+  var queues = this._opts.queues.slice().concat(
     this._opts.publishedEvents.slice(),
-    this._opts.subscribedEvents.slice());
+    this._opts.subscribedEvents.slice())
+  return queues.map(Hermes._getQueueName);
 };
 
 /**
@@ -367,6 +368,10 @@ Hermes._normalizeQueue = function (nameOrDef) {
     }
   }
   return queueDef
+}
+
+Hermes._getQueueName = function (nameOrDef) {
+  return isString(nameOrDef) ? nameOrDef : nameOrDef.name
 }
 
 /**
