@@ -283,14 +283,14 @@ describe('index.js unit test', function () {
     })
   })
 
-  describe('_doesQueueExists', function () {
+  describe('_doesQueueExist', function () {
     it('should return true if queue exists', function (done) {
       var queues = [
         { name: 'a', opts: { durable: true } },
         { name: 'b', opts: { durable: true } },
         { name: 'c', opts: { durable: true } }
       ]
-      expect(Hermes._doesQueueExists(queues, 'b')).to.be.true()
+      expect(Hermes._doesQueueExist(queues, 'b')).to.be.true()
       done()
     })
 
@@ -300,7 +300,7 @@ describe('index.js unit test', function () {
         { name: 'b', opts: { durable: true } },
         { name: 'c', opts: { durable: true } }
       ]
-      expect(Hermes._doesQueueExists(queues, 'd')).to.be.false()
+      expect(Hermes._doesQueueExist(queues, 'd')).to.be.false()
       done()
     })
   })

@@ -212,7 +212,7 @@ Hermes.prototype.getQueues = function () {
 Hermes.prototype.publish = function (queueName, data) {
   /*jshint maxcomplexity:7 */
   debug('hermes publish', queueName, data);
-  if (!Hermes._doesQueueExists(this._opts.queues, queueName) && !this._eventJobs.isPublishEvent(queueName)) {
+  if (!Hermes._doesQueueExist(this._opts.queues, queueName) && !this._eventJobs.isPublishEvent(queueName)) {
     throw new Error('attempting to publish to invalid queue: '+queueName);
   }
   if (typeof data === 'string' || data instanceof String || data instanceof Buffer) {
@@ -237,7 +237,7 @@ Hermes.prototype.publish = function (queueName, data) {
  */
 Hermes.prototype.subscribe = function (queueName, handler) {
   debug('hermes subscribe', queueName);
-  if (!Hermes._doesQueueExists(this._opts.queues, queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
+  if (!Hermes._doesQueueExist(this._opts.queues, queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
     throw new Error('attempting to subscribe to invalid queue: ' + queueName);
   }
   if (handler.length < 2) {
@@ -259,7 +259,7 @@ Hermes.prototype.subscribe = function (queueName, handler) {
  */
 Hermes.prototype.unsubscribe = function (queueName, handler, cb) {
   debug('hermes unsubscribe', queueName);
-  if (!Hermes._doesQueueExists(this._opts.queues, queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
+  if (!Hermes._doesQueueExist(this._opts.queues, queueName) && !this._eventJobs.isSubscribeEvent(queueName)) {
     throw new Error('attempting to unsubscribe from invalid queue: ' + queueName);
   }
   this.emit('unsubscribe', queueName, handler, cb);
@@ -385,7 +385,7 @@ Hermes._normalizeQueues = function (queues) {
  * @param {Array} array of mixed queueNames or queueDefs
  * @return {Boolean} true if queue with `name` exists in the array of queueDefs
  */
-Hermes._doesQueueExists = function (queues, name) {
+Hermes._doesQueueExist = function (queues, name) {
   var result = queues.filter(function (queue) {
     return queue.name === name
   })
