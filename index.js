@@ -339,6 +339,11 @@ Hermes.prototype._createChannel = function (cb) {
   });
 };
 
+/**
+ * Normalizes input queue data. Input can be either string or queueDef object with `name` and/or `opts`
+ * @param {String|Object} nameOrDef queueName or object with `name` and `opts`
+ * @return {Object} normalized queueDef object with `name` and default `opts` (`durable==true` and potentially `expires`)
+ */
 Hermes._normalizeQueue = function (nameOrDef) {
   var opts = {
     durable: true
@@ -355,14 +360,31 @@ Hermes._normalizeQueue = function (nameOrDef) {
   } else {
     queueDef = nameOrDef
     queueDef.opts = defaults(queueDef.opts, opts)
+    if (!queueDef.opts.expires) {
+      if (process.env.HERMES_QUEUE_EXPIRES) {
+        queueDef.opts.expires = process.env.HERMES_QUEUE_EXPIRES;
+      }
+    }
   }
   return queueDef
 }
 
+/**
+ * Normalizes all queues
+ * @param {Array} array of mixed queueNames or queueDefs
+ * @return {Array} array of normalized queues definitions
+ */
 Hermes._normalizeQueues = function (queues) {
   return queues.map(Hermes._normalizeQueue)
 }
 
+/**
+ * Check if queue with provided `name` exists in the array of queueDefs
+ * @param {Array} array of nromalized queueDefs
+ * @param {String} queueName to check for existence
+ * @param {Array} array of mixed queueNames or queueDefs
+ * @return {Boolean} true if queue with `name` exists in the array of queueDefs
+ */
 Hermes._doesQueueExists = function (queues, name) {
   var result = queues.filter(function (queue) {
     return queue.name === name
@@ -378,7 +400,6 @@ Hermes._doesQueueExists = function (queues, name) {
 Hermes.prototype._assertQueue = function (queueDef, cb) {
   this._channel.assertQueue(queueDef.name, queueDef.opts, cb)
 }
-
 
 /**
  * responsible for populating the channel with queues and exchanges

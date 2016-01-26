@@ -203,4 +203,51 @@ describe('index.js unit test', function () {
       });
     });
   }); // end _populateChannel
+  describe('_normalizeQueue', function () {
+    it('should return queueDef if name is provided', function (done) {
+      var def = Hermes._normalizeQueue('some.queue')
+      expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true }})
+      done()
+    })
+    it('should return queueDef if queueDef is provided', function (done) {
+      var def = Hermes._normalizeQueue({ name: 'some.queue' })
+      expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true }})
+      done()
+    })
+    it('should apply additional options', function (done) {
+      var def = Hermes._normalizeQueue({ name: 'some.queue', opts: { expires: 2 }})
+      expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true, expires: 2 }})
+      done()
+    })
+    it('should be able to override default options', function (done) {
+      var def = Hermes._normalizeQueue({ name: 'some.queue', opts: { expires: 2, durable: false }})
+      expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: false, expires: 2 }})
+      done()
+    })
+    describe('use process.env.HERMES_QUEUE_EXPIRES', function () {
+      beforeEach(function (done) {
+        process.env.HERMES_QUEUE_EXPIRES = 3
+        done()
+      })
+      afterEach(function (done) {
+        delete process.env.HERMES_QUEUE_EXPIRES
+        done()
+      })
+      it('should return queueDef if name is provided and use default expires', function (done) {
+        var def = Hermes._normalizeQueue('some.queue')
+        expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true, expires: 3 }})
+        done()
+      })
+      it('should return queueDef if queueDef is provided and use default expire', function (done) {
+        var def = Hermes._normalizeQueue({ name: 'some.queue' })
+        expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true, expires: 3 }})
+        done()
+      })
+      it('should not override per queue expires with default one', function (done) {
+        var def = Hermes._normalizeQueue({ name: 'some.queue', opts: { expires: 20 }})
+        expect(def).to.deep.equal({ name: 'some.queue', opts: { durable: true, expires: 20 }})
+        done()
+      })
+    })
+  })
 });
