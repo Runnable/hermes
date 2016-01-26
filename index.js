@@ -300,6 +300,7 @@ Hermes.prototype.connect = function (cb) {
     _this._connection.on('error', function (err) {
       err = err || new Error('Connection error');
       err.reason = 'connection error';
+      debug('connection error', err)
       _this.emit('error', err);
     });
 
@@ -333,6 +334,7 @@ Hermes.prototype._createChannel = function (cb) {
     _this._channel.on('error', function (err) {
       err = err || new Error('Channel error');
       err.reason = 'channel error';
+      debug('channel error', err)
       _this.emit('error', err);
     });
 
@@ -391,7 +393,14 @@ Hermes._normalizeQueues = function (queues) {
  */
 Hermes.prototype._assertQueue = function (queueDef, cb) {
   debug('assert queue', queueDef.name, queueDef.opts)
-  this._channel.assertQueue(queueDef.name, queueDef.opts, cb)
+  this._channel.assertQueue(queueDef.name, queueDef.opts, function (err) {
+    if (err) {
+      debug('assert queue error', queueDef.name, queueDef.opts, err)
+      return cb(err);
+    }
+    debug('assert queue success', queueDef.name, queueDef.opts)
+    cb()
+  })
 }
 
 /**
