@@ -282,26 +282,4 @@ describe('index.js unit test', function () {
       done()
     })
   })
-
-  describe('_doesQueueExist', function () {
-    it('should return true if queue exists', function (done) {
-      var queues = [
-        { name: 'a', opts: { durable: true } },
-        { name: 'b', opts: { durable: true } },
-        { name: 'c', opts: { durable: true } }
-      ]
-      expect(Hermes._doesQueueExist(queues, 'b')).to.be.true()
-      done()
-    })
-
-    it('should return false if queue does not exist', function (done) {
-      var queues = [
-        { name: 'a', opts: { durable: true } },
-        { name: 'b', opts: { durable: true } },
-        { name: 'c', opts: { durable: true } }
-      ]
-      expect(Hermes._doesQueueExist(queues, 'd')).to.be.false()
-      done()
-    })
-  })
 });
