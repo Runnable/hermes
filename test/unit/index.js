@@ -250,4 +250,58 @@ describe('index.js unit test', function () {
       })
     })
   })
+
+  describe('_normalizeQueues', function () {
+    it('should work with array of strings', function (done) {
+      var defs = Hermes._normalizeQueues(['a', 'b', 'c'])
+      expect(defs).to.deep.equal([
+        { name: 'a', opts: { durable: true } },
+        { name: 'b', opts: { durable: true } },
+        { name: 'c', opts: { durable: true } }
+      ])
+      done()
+    })
+
+    it('should work with array of objects', function (done) {
+      var defs = Hermes._normalizeQueues([{ name: 'a' }, { name: 'b' }, { name: 'c' }])
+      expect(defs).to.deep.equal([
+        { name: 'a', opts: { durable: true } },
+        { name: 'b', opts: { durable: true } },
+        { name: 'c', opts: { durable: true } }
+      ])
+      done()
+    })
+
+    it('should work with array of mixed defs', function (done) {
+      var defs = Hermes._normalizeQueues(['a', { name: 'b' }, { name: 'c' }])
+      expect(defs).to.deep.equal([
+        { name: 'a', opts: { durable: true } },
+        { name: 'b', opts: { durable: true } },
+        { name: 'c', opts: { durable: true } }
+      ])
+      done()
+    })
+  })
+
+  describe('_doesQueueExists', function () {
+    it('should return true if queue exists', function (done) {
+      var queues = [
+        { name: 'a', opts: { durable: true } },
+        { name: 'b', opts: { durable: true } },
+        { name: 'c', opts: { durable: true } }
+      ]
+      expect(Hermes._doesQueueExists(queues, 'b')).to.be.true()
+      done()
+    })
+
+    it('should return false if queue does not exist', function (done) {
+      var queues = [
+        { name: 'a', opts: { durable: true } },
+        { name: 'b', opts: { durable: true } },
+        { name: 'c', opts: { durable: true } }
+      ]
+      expect(Hermes._doesQueueExists(queues, 'd')).to.be.false()
+      done()
+    })
+  })
 });
