@@ -1,4 +1,4 @@
-Hermes
+Hermeses
 ======
 
 Simplified abstraction interface to [amqp.node](https://github.com/squaremo/amqp.node)
